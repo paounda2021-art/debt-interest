@@ -795,16 +795,115 @@ select.form-control { cursor: pointer; background-image: none; }
 .print-header-only { display: none; }
 
 /* ==============================
-   RESPONSIVE
+   RESPONSIVE DESIGN (Mobile & Tablet)
    ============================== */
-@media (max-width: 700px) {
-  .navbar { padding: 0 1rem; height: auto; padding-top: 10px; padding-bottom: 10px; flex-wrap: wrap; gap: 8px; }
-  .app-container { padding: 1rem; gap: 1rem; }
-  .form-row { grid-template-columns: 1fr; gap: 0; }
-  .summary-grid { grid-template-columns: 1fr 1fr; }
-  .nav-actions { flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 992px) {
+  .app-container {
+    padding: 1.25rem 1rem;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0.6rem 1rem;
+    height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .brand {
+    justify-content: flex-start;
+  }
+
+  .brand-title {
+    font-size: 1rem;
+  }
+
+  .brand-subtitle {
+    font-size: 0.7rem;
+  }
+
+  .nav-actions {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .navbar .btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .preset-bar {
+    gap: 6px;
+  }
+
+  .preset-btn {
+    font-size: 0.82rem;
+    padding: 5px 10px;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .stat-card {
+    padding: 0.85rem 1rem;
+  }
+
+  .stat-value {
+    font-size: 1.2rem;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    margin: 0.5rem;
+    padding: 0;
+    max-height: 95vh;
+  }
+
+  .modal-header, .modal-body, .modal-footer {
+    padding: 1rem;
+  }
+
+  .ledger-table th, .ledger-table td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
 }
 
 @media (max-width: 480px) {
-  .summary-grid { grid-template-columns: 1fr; }
+  .app-container {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .card {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+  }
+
+  .card-title {
+    font-size: 0.95rem;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-calculate {
+    font-size: 0.95rem;
+    padding: 0.75rem;
+  }
 }
