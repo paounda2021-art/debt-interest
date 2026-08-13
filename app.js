@@ -1045,7 +1045,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const savedCasesCountBadge    = document.getElementById('savedCasesCountBadge');
   const savedCasesTableBody     = document.getElementById('savedCasesTableBody');
 
-  const API = '/api/cases';
+  const getApiUrl = () => {
+    const origin = window.location.origin;
+    let pathname = window.location.pathname || '/';
+    if (pathname.endsWith('.html') || pathname.endsWith('.htm')) {
+      pathname = pathname.substring(0, pathname.lastIndexOf('/') + 1);
+    }
+    const base = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+    return `${origin}${base}/api/cases`;
+  };
+
+  const API = getApiUrl();
 
   // ─── Toast notification ───────────────────────────────────────────
   function showToast(msg, type = 'success') {
