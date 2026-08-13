@@ -1552,6 +1552,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (penaltyType === 'flat') {
       if (rateInput) {
+        rateInput.value = '0';
         rateInput.disabled = true;
         rateInput.style.background = '#f1f5f9';
         rateInput.style.color = '#94a3b8';
@@ -1569,8 +1570,12 @@ document.addEventListener('DOMContentLoaded', () => {
         rateInput.style.background = '#ffffff';
         rateInput.style.color = '#0f172a';
         rateInput.style.cursor = 'text';
+        if (!rateInput.value || parseFloat(rateInput.value) === 0) {
+          rateInput.value = '1.5';
+        }
       }
       if (penaltyInput) {
+        penaltyInput.value = '0.00';
         penaltyInput.disabled = true;
         penaltyInput.style.background = '#f1f5f9';
         penaltyInput.style.color = '#94a3b8';
@@ -1585,6 +1590,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (newPenaltyType === 'flat') {
       if (newRateInput) {
+        newRateInput.value = '0';
         newRateInput.disabled = true;
         newRateInput.style.background = '#f1f5f9';
         newRateInput.style.color = '#94a3b8';
@@ -1602,8 +1608,12 @@ document.addEventListener('DOMContentLoaded', () => {
         newRateInput.style.background = '#ffffff';
         newRateInput.style.color = '#0f172a';
         newRateInput.style.cursor = 'text';
+        if (!newRateInput.value || parseFloat(newRateInput.value) === 0) {
+          newRateInput.value = '1.5';
+        }
       }
       if (newPenaltyInput) {
+        newPenaltyInput.value = '0.00';
         newPenaltyInput.disabled = true;
         newPenaltyInput.style.background = '#f1f5f9';
         newPenaltyInput.style.color = '#94a3b8';
