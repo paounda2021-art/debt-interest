@@ -1571,8 +1571,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const feeInput = document.getElementById('rentalPenaltyFee');
     const depositInput = document.getElementById('securityDeposit');
 
+    // Security deposit is ALWAYS ENABLED (Editable White Field)
+    if (depositInput) {
+      depositInput.disabled = false;
+      depositInput.readOnly = false;
+      depositInput.classList.remove('disabled-field');
+      depositInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
+    }
+
     if (penaltyType === 'flat') {
-      // Flat mode: feeInput is ENABLED, rateInput & depositInput are DISABLED (Gray)
+      // Flat mode: feeInput is ENABLED, rateInput is DISABLED (Gray)
       if (feeInput) {
         feeInput.disabled = false;
         feeInput.readOnly = false;
@@ -1586,15 +1594,8 @@ document.addEventListener('DOMContentLoaded', () => {
         rateInput.classList.add('disabled-field');
         rateInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
       }
-      if (depositInput) {
-        depositInput.value = '0.00';
-        depositInput.disabled = true;
-        depositInput.readOnly = true;
-        depositInput.classList.add('disabled-field');
-        depositInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
-      }
     } else {
-      // Daily/Monthly mode: rateInput & depositInput are ENABLED (White), feeInput is DISABLED (Gray)
+      // Daily/Monthly mode: rateInput is ENABLED (White), feeInput is DISABLED (Gray)
       if (feeInput) {
         feeInput.value = '0.00';
         feeInput.disabled = true;
@@ -1611,12 +1612,6 @@ document.addEventListener('DOMContentLoaded', () => {
           rateInput.value = '1.5';
         }
       }
-      if (depositInput) {
-        depositInput.disabled = false;
-        depositInput.readOnly = false;
-        depositInput.classList.remove('disabled-field');
-        depositInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
-      }
     }
 
     // 2. Modal Form
@@ -1624,6 +1619,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const newRateInput = document.getElementById('newPreLitigationRate');
     const newFeeInput = document.getElementById('newRentalPenaltyFee');
     const newDepositInput = document.getElementById('newSecurityDeposit');
+
+    // Security deposit is ALWAYS ENABLED (Editable White Field)
+    if (newDepositInput) {
+      newDepositInput.disabled = false;
+      newDepositInput.readOnly = false;
+      newDepositInput.classList.remove('disabled-field');
+      newDepositInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
+    }
 
     if (newPenaltyType === 'flat') {
       if (newFeeInput) {
@@ -1638,13 +1641,6 @@ document.addEventListener('DOMContentLoaded', () => {
         newRateInput.readOnly = true;
         newRateInput.classList.add('disabled-field');
         newRateInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
-      }
-      if (newDepositInput) {
-        newDepositInput.value = '0.00';
-        newDepositInput.disabled = true;
-        newDepositInput.readOnly = true;
-        newDepositInput.classList.add('disabled-field');
-        newDepositInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
       }
     } else {
       if (newFeeInput) {
@@ -1662,12 +1658,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!newRateInput.value || parseFloat(newRateInput.value) === 0) {
           newRateInput.value = '1.5';
         }
-      }
-      if (newDepositInput) {
-        newDepositInput.disabled = false;
-        newDepositInput.readOnly = false;
-        newDepositInput.classList.remove('disabled-field');
-        newDepositInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
       }
     }
   }
