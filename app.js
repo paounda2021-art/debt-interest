@@ -405,6 +405,8 @@ document.addEventListener('DOMContentLoaded', () => {
       inputFee.setAttribute('data-last-type', penaltyType);
     }
 
+    updatePreLitigationFieldStates();
+
     let totalDaysForPenalty = Math.round((dEnd - dStart) / (1000 * 3600 * 24));
     if (totalDaysForPenalty <= 0) totalDaysForPenalty = 1;
 
@@ -1510,7 +1512,77 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         lblNewRentalPenaltyFee.innerText = 'จำนวนเงินค่าปรับสัญญาเช่า (เหมาจ่ายต่อวัน - บาท)';
       }
+      updatePreLitigationFieldStates();
     });
+  }
+
+  // Dynamic field graying out function
+  function updatePreLitigationFieldStates() {
+    // 1. Main Form
+    const penaltyType = document.getElementById('rentalPenaltyType')?.value || 'flat';
+    const rateInput = document.getElementById('preLitigationInterestRate');
+    const penaltyInput = document.getElementById('rentalPenaltyFee');
+
+    if (penaltyType === 'flat') {
+      if (rateInput) {
+        rateInput.disabled = true;
+        rateInput.style.background = '#f1f5f9';
+        rateInput.style.color = '#94a3b8';
+        rateInput.style.cursor = 'not-allowed';
+      }
+      if (penaltyInput) {
+        penaltyInput.disabled = false;
+        penaltyInput.style.background = '#ffffff';
+        penaltyInput.style.color = '#0f172a';
+        penaltyInput.style.cursor = 'text';
+      }
+    } else {
+      if (rateInput) {
+        rateInput.disabled = false;
+        rateInput.style.background = '#ffffff';
+        rateInput.style.color = '#0f172a';
+        rateInput.style.cursor = 'text';
+      }
+      if (penaltyInput) {
+        penaltyInput.disabled = true;
+        penaltyInput.style.background = '#f1f5f9';
+        penaltyInput.style.color = '#94a3b8';
+        penaltyInput.style.cursor = 'not-allowed';
+      }
+    }
+
+    // 2. Modal Form
+    const newPenaltyType = document.getElementById('newRentalPenaltyType')?.value || 'flat';
+    const newRateInput = document.getElementById('newPreLitigationRate');
+    const newPenaltyInput = document.getElementById('newRentalPenaltyFee');
+
+    if (newPenaltyType === 'flat') {
+      if (newRateInput) {
+        newRateInput.disabled = true;
+        newRateInput.style.background = '#f1f5f9';
+        newRateInput.style.color = '#94a3b8';
+        newRateInput.style.cursor = 'not-allowed';
+      }
+      if (newPenaltyInput) {
+        newPenaltyInput.disabled = false;
+        newPenaltyInput.style.background = '#ffffff';
+        newPenaltyInput.style.color = '#0f172a';
+        newPenaltyInput.style.cursor = 'text';
+      }
+    } else {
+      if (newRateInput) {
+        newRateInput.disabled = false;
+        newRateInput.style.background = '#ffffff';
+        newRateInput.style.color = '#0f172a';
+        newRateInput.style.cursor = 'text';
+      }
+      if (newPenaltyInput) {
+        newPenaltyInput.disabled = true;
+        newPenaltyInput.style.background = '#f1f5f9';
+        newPenaltyInput.style.color = '#94a3b8';
+        newPenaltyInput.style.cursor = 'not-allowed';
+      }
+    }
   }
 
   const secPreLitForm = document.getElementById('secPreLitForm');
