@@ -825,6 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
       preLitigationInterestRate: parseFloat(first['อัตราดอกเบี้ยก่อนฟ้อง'] || first['preLitigationInterestRate']) || 1.5,
       rentalPenaltyType: first['รูปแบบค่าปรับ'] || first['rentalPenaltyType'] || 'flat',
       rentalPenaltyFee: parseFloat(first['ค่าปรับสัญญาเช่า'] || first['คิดค่าปรับ'] || first['ค่าปรับค่าเช่า'] || first['ค่าปรับ'] || first['rentalPenaltyFee']) || 0,
+      securityDeposit: parseFloat(first['เงินประกันสัญญา'] || first['เงินประกัน'] || first['securityDeposit']) || 0,
       preLitigationNotes: first['หมายเหตุส่งฟ้อง'] || first['หมายเหตุสัญญาเช่า'] || first['preLitigationNotes'] || '',
       interestStages: [],
       partialPayments: []
@@ -977,9 +978,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnDownloadCsvTemplate) {
     btnDownloadCsvTemplate.addEventListener('click', () => {
-      const csvContent = `หมายเลขคดีดำ,หมายเลขคดีแดง,ชื่อโจทก์,ชื่อจำเลย,ยอดหนี้ก่อนฟ้อง,คิดค่าปรับ,หมายเหตุส่งฟ้อง,เงินต้นฟ้อง,วันผิดนัด,วันฟ้อง,วันพิพากษา,ค่าธรรมเนียมศาลและค่าทนายความ,วันที่ชำระเงิน,จำนวนเงินชำระ,หมายเหตุ
-พ. 101/2565,พ. 505/2565,บริษัท พัฒนาอสังหา จำกัด,นายสมคิด มั่งมี,250000,15000,ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดตามสัญญาเช่า,250000,2020-01-01,2021-01-01,2021-06-01,11000,2021-08-15,20000,ผ่อนชำระงวดที่ 1
-พ. 101/2565,พ. 505/2565,บริษัท พัฒนาอสังหา จำกัด,นายสมคิด มั่งมี,250000,15000,ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดตามสัญญาเช่า,250000,2020-01-01,2021-01-01,2021-06-01,11000,2022-02-10,35000,ผ่อนชำระงวดที่ 2`;
+      const csvContent = `หมายเลขคดีดำ,หมายเลขคดีแดง,ชื่อโจทก์,ชื่อจำเลย,ยอดหนี้ก่อนฟ้อง,คิดค่าปรับ,เงินประกันสัญญา,หมายเหตุส่งฟ้อง,เงินต้นฟ้อง,วันผิดนัด,วันฟ้อง,วันพิพากษา,ค่าธรรมเนียมศาลและค่าทนายความ,วันที่ชำระเงิน,จำนวนเงินชำระ,หมายเหตุ
+พ. 101/2565,พ. 505/2565,บริษัท พัฒนาอสังหา จำกัด,นายสมคิด มั่งมี,250000,15000,50000,ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดตามสัญญาเช่า,250000,2020-01-01,2021-01-01,2021-06-01,11000,2021-08-15,20000,ผ่อนชำระงวดที่ 1
+พ. 101/2565,พ. 505/2565,บริษัท พัฒนาอสังหา จำกัด,นายสมคิด มั่งมี,250000,15000,50000,ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดตามสัญญาเช่า,250000,2020-01-01,2021-01-01,2021-06-01,11000,2022-02-10,35000,ผ่อนชำระงวดที่ 2`;
       downloadFile(csvContent, 'Debtor_Import_Template.csv', 'text/csv;charset=utf-8;');
     });
   }
@@ -1853,10 +1854,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function downloadPreLitCsvTemplate() {
-    const csvContent = '\uFEFF' + `ชื่อลูกหนี้,ยอดหนี้ก่อนส่งฟ้อง,อัตราดอกเบี้ยก่อนฟ้อง,รูปแบบค่าปรับ,ค่าปรับสัญญาเช่า,วันผิดนัดชำระ,วันเสนอเรื่อง,หมายเหตุส่งฟ้อง
-นายสมคิด มั่งมี,250000,1.5,daily,500,2020-01-01,2021-01-01,ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดรายวัน
-บริษัท พัฒนาอสังหา จำกัด,450000,1.5,flat,25000,2019-06-01,2020-12-01,ค้างชำระค่าเช่าพื้นที่อาคารพาณิชย์
-บริษัท สยามการค้า จำกัด,180000,1.5,monthly,2500,2022-03-01,2023-01-01,ค้างชำระค่าเช่ารายเดือน`;
+    const csvContent = '\uFEFF' + `ชื่อลูกหนี้,ยอดหนี้ก่อนส่งฟ้อง,อัตราดอกเบี้ยก่อนฟ้อง,รูปแบบค่าปรับ,ค่าปรับสัญญาเช่า,เงินประกันสัญญา,วันผิดนัดชำระ,วันเสนอเรื่อง,หมายเหตุส่งฟ้อง
+นายสมคิด มั่งมี,250000,1.5,daily,500,50000,2020-01-01,2021-01-01,ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดรายวัน
+บริษัท พัฒนาอสังหา จำกัด,450000,1.5,flat,25000,100000,2019-06-01,2020-12-01,ค้างชำระค่าเช่าพื้นที่อาคารพาณิชย์
+บริษัท สยามการค้า จำกัด,180000,1.5,monthly,2500,30000,2022-03-01,2023-01-01,ค้างชำระค่าเช่ารายเดือน`;
     downloadFile(csvContent, 'Pre_Litigation_Debtors_Template.csv', 'text/csv;charset=utf-8;');
   }
 
@@ -1914,6 +1915,7 @@ document.addEventListener('DOMContentLoaded', () => {
               preLitigationInterestRate: parseFloat(r['อัตราดอกเบี้ยก่อนฟ้อง']) || 1.5,
               rentalPenaltyType: r['รูปแบบค่าปรับ'] || 'flat',
               rentalPenaltyFee: parseFloat(r['ค่าปรับสัญญาเช่า'] || r['คิดค่าปรับ']) || 0,
+              securityDeposit: parseFloat(r['เงินประกันสัญญา'] || r['เงินประกัน'] || r['securityDeposit']) || 0,
               defaultDate: r['วันผิดนัดชำระ'] || r['วันผิดนัด'] || '2020-01-01',
               filingDate: r['วันเสนอเรื่อง'] || r['วันฟ้องคดี'] || '2021-01-01',
               preLitigationNotes: r['หมายเหตุส่งฟ้อง'] || ''
@@ -1952,7 +1954,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('preLitigationDebtorName').value = d.preLitigationDebtorName || d.defendantName;
     }
     if (d.preLitigationDebt !== undefined || d.principalAmount !== undefined) {
-      document.getElementById('preLitigationDebt').value = d.preLitigationDebt !== undefined ? d.preLitigationDebt : d.principalAmount;
+      document.getElementById('preLitigationDebt').value = formatNumberWithCommas(d.preLitigationDebt !== undefined ? d.preLitigationDebt : d.principalAmount);
     }
     if (d.preLitigationInterestRate !== undefined) {
       document.getElementById('preLitigationInterestRate').value = d.preLitigationInterestRate;
@@ -1961,7 +1963,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('rentalPenaltyType').value = d.rentalPenaltyType;
     }
     if (d.rentalPenaltyFee !== undefined) {
-      document.getElementById('rentalPenaltyFee').value = d.rentalPenaltyFee;
+      document.getElementById('rentalPenaltyFee').value = formatNumberWithCommas(d.rentalPenaltyFee);
+    }
+    if (d.securityDeposit !== undefined && document.getElementById('securityDeposit')) {
+      document.getElementById('securityDeposit').value = formatNumberWithCommas(d.securityDeposit);
     }
     if (d.defaultDate) {
       document.getElementById('defaultDate').value = d.defaultDate;
