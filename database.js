@@ -213,7 +213,7 @@ function updateCase(id, data) {
     data.rentalPenaltyFee   || 0,
     data.preLitigationNotes || '',
     data.preLitigationDebtor || '',
-    data.preLitigationRate !== undefined ? data.preLitigationRate : 7.5,
+    data.preLitigationRate !== undefined ? data.preLitigationRate : 1.5,
     data.rentalPenaltyType || 'flat',
     data.category || 'prelit',
     JSON.stringify(data.interestStages  || []),

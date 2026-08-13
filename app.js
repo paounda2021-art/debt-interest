@@ -1099,14 +1099,14 @@ document.addEventListener('DOMContentLoaded', () => {
       preLitigationDebtor: preDebtor || defName || '',
       preLitigationRate:  parseFloat(document.getElementById('preLitigationInterestRate')?.value) || 1.5,
       rentalPenaltyType:  document.getElementById('rentalPenaltyType')?.value || 'flat',
-      principalAmount:    parseFloat(document.getElementById('principalAmount')?.value) || 0,
+      principalAmount:    parseFormattedNumber(document.getElementById('principalAmount')?.value) || 0,
       defaultDate:        document.getElementById('defaultDate')?.value  || '',
       filingDate:         document.getElementById('filingDate')?.value   || '',
       judgmentDate:       document.getElementById('judgmentDate')?.value || '',
-      courtFeeAwarded:    parseFloat(document.getElementById('courtFeeAwarded')?.value) || 0,
+      courtFeeAwarded:    parseFormattedNumber(document.getElementById('courtFeeAwarded')?.value) || 0,
       attorneyFeeAwarded: 0,
-      preLitigationDebt:  parseFloat(document.getElementById('preLitigationDebt')?.value) || 0,
-      rentalPenaltyFee:   parseFloat(document.getElementById('rentalPenaltyFee')?.value) || 0,
+      preLitigationDebt:  parseFormattedNumber(document.getElementById('preLitigationDebt')?.value) || 0,
+      rentalPenaltyFee:   parseFormattedNumber(document.getElementById('rentalPenaltyFee')?.value) || 0,
       preLitigationNotes: document.getElementById('preLitigationNotes')?.value || '',
       interestStages:     [...interestStages],
       partialPayments:    [...partialPayments]
@@ -1531,7 +1531,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const plaintiffName = document.getElementById('newCourtPlaintiffName')?.value || '';
         const caseBlackNo = document.getElementById('newCaseBlackNo')?.value || '';
         const caseRedNo = document.getElementById('newCaseRedNo')?.value || '';
-        const principalAmt = parseFloat(document.getElementById('newPrincipalAmount')?.value) || 100000;
+        const principalAmt = parseFormattedNumber(document.getElementById('newPrincipalAmount')?.value) || 100000;
         const defaultDate = document.getElementById('newCourtDefaultDate')?.value || '2020-01-01';
         const filingDate = document.getElementById('newCourtFilingDate')?.value || '2021-01-01';
         const preset = document.getElementById('newInterestPreset')?.value || 'legal2021';
