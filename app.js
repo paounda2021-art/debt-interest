@@ -282,13 +282,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const thPreLitCalcBadge = document.getElementById('thPreLitCalcBadge');
     if (thPreLitCalcBadge) {
-      thPreLitCalcBadge.innerText = preLitCalcMode === 'daily' ? '(รายวัน)' : '(รายเดือน)';
+      thPreLitCalcBadge.innerText = preLitCalcMode === 'flat' ? '(เหมาจ่ายต่อวัน)' : (preLitCalcMode === 'daily' ? '(รายวัน)' : '(รายเดือน)');
     }
 
     if (noticeText) {
-      noticeText.innerHTML = preLitCalcMode === 'daily'
-        ? `📅 คำนวณผิดนัดจาก <strong>${formatDateThai(defaultDateStr)}</strong> ถึง <strong>${formatDateThai(filingDateStr)}</strong> (โหมดคำนวณรายวัน)`
-        : `📅 คำนวณผิดนัดจาก <strong>${formatDateThai(defaultDateStr)}</strong> ถึง <strong>${formatDateThai(filingDateStr)}</strong> (โหมดคำนวณรายเดือน)`;
+      noticeText.innerHTML = preLitCalcMode === 'flat'
+        ? `📅 คำนวณผิดนัดจาก <strong>${formatDateThai(defaultDateStr)}</strong> ถึง <strong>${formatDateThai(filingDateStr)}</strong> (โหมดคำนวณเหมาจ่ายต่อวัน)`
+        : (preLitCalcMode === 'daily'
+          ? `📅 คำนวณผิดนัดจาก <strong>${formatDateThai(defaultDateStr)}</strong> ถึง <strong>${formatDateThai(filingDateStr)}</strong> (โหมดคำนวณรายวัน)`
+          : `📅 คำนวณผิดนัดจาก <strong>${formatDateThai(defaultDateStr)}</strong> ถึง <strong>${formatDateThai(filingDateStr)}</strong> (โหมดคำนวณรายเดือน)`);
     }
 
     let rowsHtml = '';
@@ -344,6 +346,25 @@ document.addEventListener('DOMContentLoaded', () => {
           </tr>
         `;
       }
+    } else if (preLitCalcMode === 'flat') {
+      let days = Math.round((dEnd - dStart) / (1000 * 3600 * 24));
+      if (days <= 0) days = 1;
+
+      const flatFeePerDay = rawPenaltyVal;
+      const totalFlatPenalty = flatFeePerDay * days;
+      totalAccruedInterest = totalFlatPenalty;
+
+      rowsHtml += `
+        <tr>
+          <td><strong>คำนวณเหมาจ่ายต่อวัน</strong></td>
+          <td>${formatDateThai(defaultDateStr)} - ${formatDateThai(filingDateStr)}</td>
+          <td>${days} วัน <span style="font-size:0.8rem; color:var(--primary-blue, #1d4ed8); font-weight:600;">(เหมาจ่ายต่อวัน)</span></td>
+          <td>${formatCurrency(flatFeePerDay)} ฿/วัน</td>
+          <td>${formatCurrency(preDebt)}</td>
+          <td style="color: var(--accent-amber);">${formatCurrency(totalFlatPenalty)} <span style="font-size:0.75rem; font-weight:600; color:var(--accent-amber);">(เหมาจ่ายต่อวัน)</span></td>
+          <td><strong>${formatCurrency(preDebt + totalFlatPenalty)}</strong></td>
+        </tr>
+      `;
     } else {
       const startYear = dStart.getFullYear();
       const startMonth = dStart.getMonth();
@@ -2015,6 +2036,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const btnPreLitCalcModeDaily = document.getElementById('btnPreLitCalcModeDaily');
   const btnPreLitCalcModeMonthly = document.getElementById('btnPreLitCalcModeMonthly');
+  const btnPreLitCalcModeFlat = document.getElementById('btnPreLitCalcModeFlat');
 
   if (btnPreLitCalcModeDaily) {
     btnPreLitCalcModeDaily.addEventListener('click', (e) => {
@@ -2022,8 +2044,9 @@ document.addEventListener('DOMContentLoaded', () => {
       preLitCalcMode = 'daily';
       btnPreLitCalcModeDaily.classList.add('active');
       btnPreLitCalcModeMonthly?.classList.remove('active');
+      btnPreLitCalcModeFlat?.classList.remove('active');
       const penaltySel = document.getElementById('rentalPenaltyType');
-      if (penaltySel && penaltySel.value === 'monthly') {
+      if (penaltySel && penaltySel.value !== 'daily') {
         penaltySel.value = 'daily';
       }
       calculateAndRender();
@@ -2036,9 +2059,25 @@ document.addEventListener('DOMContentLoaded', () => {
       preLitCalcMode = 'monthly';
       btnPreLitCalcModeMonthly.classList.add('active');
       btnPreLitCalcModeDaily?.classList.remove('active');
+      btnPreLitCalcModeFlat?.classList.remove('active');
       const penaltySel = document.getElementById('rentalPenaltyType');
-      if (penaltySel && penaltySel.value === 'daily') {
+      if (penaltySel && penaltySel.value !== 'monthly') {
         penaltySel.value = 'monthly';
+      }
+      calculateAndRender();
+    });
+  }
+
+  if (btnPreLitCalcModeFlat) {
+    btnPreLitCalcModeFlat.addEventListener('click', (e) => {
+      e.preventDefault();
+      preLitCalcMode = 'flat';
+      btnPreLitCalcModeFlat.classList.add('active');
+      btnPreLitCalcModeDaily?.classList.remove('active');
+      btnPreLitCalcModeMonthly?.classList.remove('active');
+      const penaltySel = document.getElementById('rentalPenaltyType');
+      if (penaltySel && penaltySel.value !== 'flat') {
+        penaltySel.value = 'flat';
       }
       calculateAndRender();
     });
