@@ -279,10 +279,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!dStart || !dEnd || dStart >= dEnd) {
+      updatePreLitigationFieldStates();
       if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">โปรดระบุวันผิดนัดชำระและวันฟ้องคดี/วันคำนวณเพื่อแสดงตารางก่อนส่งฟ้อง</td></tr>`;
       return { preDebt, effectivePenalty: 0, totalAccruedInterest: 0, grandTotal: preDebt };
     }
 
+    updatePreLitigationFieldStates();
     syncPreLitCalcModeButtons();
 
     const thPreLitCalcBadge = document.getElementById('thPreLitCalcBadge');
