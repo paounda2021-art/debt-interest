@@ -82,17 +82,9 @@ apiRouter.delete(['/cases/:id', '/cases/:id/'], (req, res) => {
   }
 });
 
-// Intercept any request containing /api/cases (supports reverse proxies & subpaths)
-app.use((req, res, next) => {
-  if (req.url.includes('/api/cases')) {
-    const apiPath = req.url.substring(req.url.indexOf('/api/cases') + 4); // turns /debt-interest/api/cases into /api/cases
-    req.url = apiPath;
-    return apiRouter(req, res, next);
-  }
-  next();
-});
-
+// Mount Router to support root /api and subpaths like /debt-interest/api
 app.use('/api', apiRouter);
+app.use('*/api', apiRouter);
 
 // ─── SPA Fallback & API 404 / Error Handlers ───────────────────────
 app.use((err, req, res, next) => {
@@ -101,10 +93,6 @@ app.use((err, req, res, next) => {
 });
 
 app.all('/api/*', (req, res) => {
-  res.status(404).json({ success: false, error: `API endpoint not found: ${req.method} ${req.path}` });
-});
-
-app.all('*/api/*', (req, res) => {
   res.status(404).json({ success: false, error: `API endpoint not found: ${req.method} ${req.path}` });
 });
 

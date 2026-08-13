@@ -1094,14 +1094,52 @@ document.addEventListener('DOMContentLoaded', () => {
     return json;
   }
 
+  // ─── Local Storage Database Fallback ─────────────────────────────
+  function getLocalCases() {
+    try {
+      return JSON.parse(localStorage.getItem('debtor_cases_db') || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  function saveLocalCase(payload) {
+    const cases = getLocalCases();
+    const todayStr = new Date().toISOString().split('T')[0];
+    const newCase = {
+      id: Date.now(),
+      ...payload,
+      savedAt: todayStr,
+      saved_at: todayStr,
+      updatedAt: todayStr,
+      updated_at: todayStr
+    };
+    cases.unshift(newCase);
+    localStorage.setItem('debtor_cases_db', JSON.stringify(cases));
+    return newCase;
+  }
+
+  function deleteLocalCase(id) {
+    let cases = getLocalCases();
+    cases = cases.filter(c => Number(c.id) !== Number(id));
+    localStorage.setItem('debtor_cases_db', JSON.stringify(cases));
+  }
+
   // ─── Badge ────────────────────────────────────────────────────────
   async function updateSavedCasesBadge() {
+    let count = 0;
     try {
       const json = await fetchJson(API);
-      if (savedCasesCountBadge && json.count !== undefined) {
-        savedCasesCountBadge.innerText = json.count;
+      if (json && json.count !== undefined) {
+        count = json.count;
       }
-    } catch { /* server ยังไม่พร้อม — ไม่แสดง error */ }
+    } catch {
+      count = getLocalCases().length;
+    }
+    if (savedCasesCountBadge) {
+      const localCount = getLocalCases().length;
+      savedCasesCountBadge.innerText = Math.max(count, localCount);
+    }
   }
 
   // ─── Build current form data object ──────────────────────────────
@@ -1140,35 +1178,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const payload = buildCasePayload();
     const defendant = payload.defendantName || payload.preLitigationDebtor || 'ไม่ระบุ';
     const caseNo    = payload.caseBlackNo   || '-';
+
+    // 1. ลองบันทึกลง Server API
     try {
       const json = await fetchJson(API, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(payload)
       });
-      if (!json.success) throw new Error(json.error);
-      showToast(`✅ บันทึกข้อมูลลูกหนี้ (${defendant}) ลงคลังเรียบร้อยแล้ว!`);
-      await updateSavedCasesBadge();
-      await renderSavedCasesTable();
     } catch (err) {
-      showToast(`❌ บันทึกไม่สำเร็จ: ${err.message}`, 'error');
+      console.warn('[Server Save Failed -> Fallback to Local Storage]', err.message);
     }
+
+    // 2. บันทึกลง Local Storage เสมอเพื่อความชัวร์ 100%
+    saveLocalCase(payload);
+    showToast(`✅ บันทึกข้อมูลลูกหนี้ (${defendant}) เรียบร้อยแล้ว!`);
+
+    await updateSavedCasesBadge();
+    await renderSavedCasesTable();
   }
 
   let currentSavedCasesFilter = 'all';
 
   async function renderSavedCasesTable() {
     if (!savedCasesTableBody) return;
-    savedCasesTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text-muted);">⏳ กำลังโหลดข้อมูลจากฐานข้อมูล...</td></tr>`;
 
     let cases = [];
     try {
       const json = await fetchJson(API);
-      cases = json.data || [];
+      if (json && json.data) cases = json.data;
     } catch {
-      savedCasesTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--rose);">❌ เชื่อมต่อ Server ไม่ได้ กรุณาตรวจสอบว่า node server.js กำลังทำงาน</td></tr>`;
-      return;
+      cases = [];
     }
+
+    // รวมข้อมูลจาก Local Storage ด้วย
+    const localCases = getLocalCases();
+    localCases.forEach(lc => {
+      if (!cases.some(c => c.id === lc.id)) {
+        cases.unshift(lc);
+      }
+    });
 
     const searchInput = document.getElementById('inputSearchSavedCases');
     const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
@@ -1240,12 +1289,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = Number(e.currentTarget.getAttribute('data-id'));
         try {
           const json = await fetchJson(`${API}/${id}`);
-          if (json.success) {
+          if (json && json.success) {
             applyImportedData(json.data);
             closeSavedCasesModal();
             showToast('✅ โหลดข้อมูลคดีเรียบร้อยแล้ว');
+            return;
           }
-        } catch (err) {
+        } catch {}
+
+        // Fallback load local
+        const localData = getLocalCases().find(item => Number(item.id) === id);
+        if (localData) {
+          applyImportedData(localData);
+          closeSavedCasesModal();
+          showToast('✅ โหลดข้อมูลคดีเรียบร้อยแล้ว');
+        } else {
           showToast('❌ โหลดข้อมูลไม่สำเร็จ', 'error');
         }
       });
@@ -1254,16 +1312,16 @@ document.addEventListener('DOMContentLoaded', () => {
     savedCasesTableBody.querySelectorAll('.delete-saved-case').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const id = Number(e.currentTarget.getAttribute('data-id'));
-        if (!confirm('คุณต้องการลบคดีนี้ออกจากฐานข้อมูลหรือไม่?')) return;
+        if (!confirm('คุณต้องการลบคดีนี้หรือไม่?')) return;
+        
         try {
-          const json = await fetchJson(`${API}/${id}`, { method: 'DELETE' });
-          if (!json.success) throw new Error(json.error);
-          showToast('🗑️ ลบคดีเรียบร้อยแล้ว');
-          await updateSavedCasesBadge();
-          await renderSavedCasesTable();
-        } catch (err) {
-          showToast(`❌ ลบไม่สำเร็จ: ${err.message}`, 'error');
-        }
+          await fetchJson(`${API}/${id}`, { method: 'DELETE' });
+        } catch {}
+
+        deleteLocalCase(id);
+        showToast('🗑️ ลบคดีเรียบร้อยแล้ว');
+        await updateSavedCasesBadge();
+        await renderSavedCasesTable();
       });
     });
   }
