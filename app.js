@@ -1381,8 +1381,11 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast(`⚖️ บันทึกข้อมูลลูกหนี้ (${debtorName}) ส่งฝ่ายกฎหมายเรียบร้อยแล้ว!`);
   }
 
-  if (btnSaveCurrentCase)          btnSaveCurrentCase.addEventListener('click', saveCurrentCase);
-  if (btnModalSaveCurrentCase)     btnModalSaveCurrentCase.addEventListener('click', saveCurrentCase);
+  if (btnOpenSavedCasesModal)  btnOpenSavedCasesModal.addEventListener('click', () => openSavedCasesModal());
+  if (btnCloseSavedCasesModal) btnCloseSavedCasesModal.addEventListener('click', closeSavedCasesModal);
+  if (btnCloseSavedCases)      btnCloseSavedCases.addEventListener('click', closeSavedCasesModal);
+  if (btnSaveCurrentCase)      btnSaveCurrentCase.addEventListener('click', saveCurrentCase);
+  if (btnModalSaveCurrentCase) btnModalSaveCurrentCase.addEventListener('click', saveCurrentCase);
   if (btnSavePreLitigation)        btnSavePreLitigation.addEventListener('click', savePreLitigationCase);
   if (btnSavePreLitigationSummary) btnSavePreLitigationSummary.addEventListener('click', savePreLitigationCase);
 
