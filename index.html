@@ -31,22 +31,22 @@
     </div>
 
     <div class="nav-actions">
-      <button type="button" class="btn btn-primary" id="btnOpenAddDebtorModal" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;font-weight:700;">
+      <button type="button" class="btn btn-primary" id="btnOpenAddDebtorModal" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;font-weight:700;" title="เพิ่มรายการลูกหนี้ก่อนฟ้อง หรือลูกหนี้คดีใหม่แบบรวดเร็ว">
         <i data-lucide="user-plus"></i> เพิ่มลูกหนี้
       </button>
-      <button type="button" class="btn btn-secondary" id="btnSaveCurrentCase">
+      <button type="button" class="btn btn-secondary" id="btnSaveCurrentCase" title="บันทึกข้อมูลคดีและยอดหนี้ปัจจุบันทั้งหมดลงคลังฐานข้อมูล (cases.db)">
         <i data-lucide="save"></i> บันทึก
       </button>
-      <button type="button" class="btn btn-secondary" id="btnOpenSavedCasesModal">
+      <button type="button" class="btn btn-secondary" id="btnOpenSavedCasesModal" title="เปิดคลังรายการคดีลูกหนี้ที่บันทึกไว้ ค้นหา กรอง และดึงคดีกลับขึ้นมาดูย้อนหลัง">
         <i data-lucide="folder-kanban"></i> คลัง <span class="badge badge-warning" id="savedCasesCountBadge">0</span>
       </button>
-      <button type="button" class="btn btn-secondary" id="btnOpenImportModal">
+      <button type="button" class="btn btn-secondary" id="btnOpenImportModal" title="นำเข้าข้อมูลลูกหนี้และคดีจากไฟล์ CSV หรือ JSON">
         <i data-lucide="upload-cloud"></i> นำเข้า
       </button>
-      <button type="button" class="btn btn-secondary" id="btnExportJson">
+      <button type="button" class="btn btn-secondary" id="btnExportJson" title="ดาวน์โหลดไฟล์สำรองข้อมูลคดีปัจจุบัน (JSON)">
         <i data-lucide="download"></i> สำรอง
       </button>
-      <button type="button" class="btn btn-primary" id="btnPrintReport" style="background:linear-gradient(135deg,var(--gold),#a57419);color:#fff;">
+      <button type="button" class="btn btn-primary" id="btnPrintReport" style="background:linear-gradient(135deg,var(--gold),#a57419);color:#fff;" title="พิมพ์รายงานสรุปยอดหนี้และตารางคำนวณดอกเบี้ยเป็นเอกสาร หรือ บันทึกเป็น PDF">
         <i data-lucide="printer"></i> พิมพ์/PDF
       </button>
       <!-- hidden alias for theme toggle used by JS -->
@@ -72,13 +72,13 @@
               <i data-lucide="scale"></i> ข้อมูลก่อนส่งฟ้อง (สำหรับส่งฝ่ายกฎหมาย)
             </h2>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button type="button" class="btn btn-primary no-print" id="btnSavePreLitigation" style="background: linear-gradient(135deg, #10b981, #047857); color: white; border: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.2);">
+              <button type="button" class="btn btn-primary no-print" id="btnSavePreLitigation" style="background: linear-gradient(135deg, #10b981, #047857); color: white; border: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.2);" title="บันทึกข้อมูลลูกหนี้คนนี้ส่งฝ่ายกฎหมายลงคลังฐานข้อมูล">
                 <i data-lucide="save"></i> บันทึกข้อมูลส่งฝ่ายกฎหมาย
               </button>
-              <button type="button" class="btn btn-secondary btn-danger-sm no-print" id="btnPrintPreLitigationReport" style="background: var(--royal); color: white; border: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+              <button type="button" class="btn btn-secondary btn-danger-sm no-print" id="btnPrintPreLitigationReport" style="background: var(--royal); color: white; border: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;" title="พิมพ์เอกสารบันทึกข้อความเสนอเรื่องดำเนินคดีส่งฝ่ายกฎหมาย">
                 <i data-lucide="printer"></i> พิมพ์สรุปส่งฝ่ายกฎหมาย
               </button>
-              <button type="button" class="btn btn-secondary no-print" id="btnClearPreLitigationForm" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;" title="ล้างข้อมูลช่องกรอกในแบบฟอร์ม">
+              <button type="button" class="btn btn-secondary no-print" id="btnClearPreLitigationForm" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;" title="ล้างข้อมูลในช่องกรอกแบบฟอร์มลูกหนี้ก่อนฟ้องทั้งหมด">
                 <i data-lucide="rotate-ccw"></i> ล้างข้อมูล
               </button>
               <input type="file" id="fileInputPreLitigation" accept=".csv, .json" style="display: none;">
