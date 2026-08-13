@@ -1554,19 +1554,22 @@ document.addEventListener('DOMContentLoaded', () => {
       if (rateInput) {
         rateInput.value = '0';
         rateInput.disabled = true;
+        rateInput.readOnly = true;
         rateInput.classList.add('disabled-field');
-        rateInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important;');
+        rateInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
       }
       if (penaltyInput) {
         penaltyInput.disabled = false;
+        penaltyInput.readOnly = false;
         penaltyInput.classList.remove('disabled-field');
-        penaltyInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important;');
+        penaltyInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
       }
     } else {
       if (rateInput) {
         rateInput.disabled = false;
+        rateInput.readOnly = false;
         rateInput.classList.remove('disabled-field');
-        rateInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important;');
+        rateInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
         if (!rateInput.value || parseFloat(rateInput.value) === 0) {
           rateInput.value = '1.5';
         }
@@ -1574,8 +1577,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (penaltyInput) {
         penaltyInput.value = '0.00';
         penaltyInput.disabled = true;
+        penaltyInput.readOnly = true;
         penaltyInput.classList.add('disabled-field');
-        penaltyInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important;');
+        penaltyInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
       }
     }
 
@@ -1588,19 +1592,22 @@ document.addEventListener('DOMContentLoaded', () => {
       if (newRateInput) {
         newRateInput.value = '0';
         newRateInput.disabled = true;
+        newRateInput.readOnly = true;
         newRateInput.classList.add('disabled-field');
-        newRateInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important;');
+        newRateInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
       }
       if (newPenaltyInput) {
         newPenaltyInput.disabled = false;
+        newPenaltyInput.readOnly = false;
         newPenaltyInput.classList.remove('disabled-field');
-        newPenaltyInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important;');
+        newPenaltyInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
       }
     } else {
       if (newRateInput) {
         newRateInput.disabled = false;
+        newRateInput.readOnly = false;
         newRateInput.classList.remove('disabled-field');
-        newRateInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important;');
+        newRateInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
         if (!newRateInput.value || parseFloat(newRateInput.value) === 0) {
           newRateInput.value = '1.5';
         }
@@ -1608,10 +1615,34 @@ document.addEventListener('DOMContentLoaded', () => {
       if (newPenaltyInput) {
         newPenaltyInput.value = '0.00';
         newPenaltyInput.disabled = true;
+        newPenaltyInput.readOnly = true;
         newPenaltyInput.classList.add('disabled-field');
-        newPenaltyInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important;');
+        newPenaltyInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
       }
     }
+  }
+
+  // Input event guards
+  const preLitRateElem = document.getElementById('preLitigationInterestRate');
+  if (preLitRateElem) {
+    preLitRateElem.addEventListener('input', () => {
+      const mode = document.getElementById('rentalPenaltyType')?.value || 'flat';
+      if (mode === 'flat') {
+        preLitRateElem.value = '0';
+        updatePreLitigationFieldStates();
+      }
+    });
+  }
+
+  const preLitPenaltyElem = document.getElementById('rentalPenaltyFee');
+  if (preLitPenaltyElem) {
+    preLitPenaltyElem.addEventListener('input', () => {
+      const mode = document.getElementById('rentalPenaltyType')?.value || 'flat';
+      if (mode === 'daily' || mode === 'monthly') {
+        preLitPenaltyElem.value = '0.00';
+        updatePreLitigationFieldStates();
+      }
+    });
   }
 
   const secPreLitForm = document.getElementById('secPreLitForm');
