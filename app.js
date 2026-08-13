@@ -280,6 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return { preDebt, effectivePenalty: rawPenaltyVal, totalAccruedInterest: 0, grandTotal: preDebt + rawPenaltyVal };
     }
 
+    syncPreLitCalcModeButtons();
+
     const thPreLitCalcBadge = document.getElementById('thPreLitCalcBadge');
     if (thPreLitCalcBadge) {
       thPreLitCalcBadge.innerText = preLitCalcMode === 'flat' ? '(เหมาจ่ายต่อวัน)' : (preLitCalcMode === 'daily' ? '(รายวัน)' : '(รายเดือน)');
@@ -1475,15 +1477,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const val = rentalPenaltyTypeSelect.value;
       if (val === 'daily') {
         preLitCalcMode = 'daily';
-        document.getElementById('btnPreLitCalcModeDaily')?.classList.add('active');
-        document.getElementById('btnPreLitCalcModeMonthly')?.classList.remove('active');
       } else if (val === 'monthly') {
         preLitCalcMode = 'monthly';
-        document.getElementById('btnPreLitCalcModeMonthly')?.classList.add('active');
-        document.getElementById('btnPreLitCalcModeDaily')?.classList.remove('active');
+      } else if (val === 'flat') {
+        preLitCalcMode = 'flat';
       }
+      syncPreLitCalcModeButtons();
       calculateAndRender();
     });
+  }
+
+  function syncPreLitCalcModeButtons() {
+    const btnDaily = document.getElementById('btnPreLitCalcModeDaily');
+    const btnMonthly = document.getElementById('btnPreLitCalcModeMonthly');
+    const btnFlat = document.getElementById('btnPreLitCalcModeFlat');
+
+    btnDaily?.classList.remove('active');
+    btnMonthly?.classList.remove('active');
+    btnFlat?.classList.remove('active');
+
+    if (preLitCalcMode === 'flat') {
+      btnFlat?.classList.add('active');
+    } else if (preLitCalcMode === 'monthly') {
+      btnMonthly?.classList.add('active');
+    } else {
+      btnDaily?.classList.add('active');
+    }
   }
 
   // Saved Cases Search & Filter Handlers
