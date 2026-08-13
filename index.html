@@ -94,7 +94,7 @@
               <input type="text" id="preLitigationDebtorName" class="form-control" placeholder="เช่น นายสมคิด มั่งมี / บริษัท ผู้เช่า จำกัด">
             </div>
             <div class="form-group">
-              <label class="form-label">อัตราดอกเบี้ยปรับก่อนฟ้อง (% ต่อเดือน)</label>
+              <label class="form-label">ค่าปรับตามสัญญา (% ต่อเดือน)</label>
               <input type="number" id="preLitigationInterestRate" class="form-control" placeholder="เช่น 1.5 หรือ 7.5" value="1.5" step="any" min="0">
             </div>
           </div>
@@ -116,8 +116,8 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" id="lblRentalPenaltyFee">จำนวนเงินค่าปรับ (บาท)</label>
-              <input type="text" inputmode="decimal" id="rentalPenaltyFee" class="form-control" placeholder="เช่น 15,000.00 (เหมาจ่าย) หรือ 500.00 (รายวัน)">
+              <label class="form-label" id="lblRentalPenaltyFee">เงินประกันสัญญา (บาท)</label>
+              <input type="text" inputmode="decimal" id="rentalPenaltyFee" class="form-control" placeholder="เช่น 15,000.00">
             </div>
             <div class="form-group">
               <label class="form-label">หมายเหตุ / รายละเอียดสัญญาเช่า</label>
@@ -596,28 +596,9 @@
             กรอกข้อมูลลูกหนี้และรายละเอียดคำสั่งศาลเบื้องต้น ระบบจะบันทึกเข้าคลังและเริ่มคำนวณทันที:
           </p>
 
-          <!-- Category Selector -->
-          <div class="form-group" style="margin-bottom: 1.25rem;">
-            <label class="form-label" style="font-weight: 700; color: #1d4ed8; font-size: 0.92rem;">
-              📌 เลือกประเภทลูกหนี้ที่ต้องการบันทึก *
-            </label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
-              <label id="lblCatPreLit" style="border: 2px solid #1d4ed8; background: rgba(59,130,246,0.08); padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; transition: all 0.2s;">
-                <input type="radio" name="newDebtorCategory" id="catPreLit" value="prelit" checked style="margin-top: 3px;">
-                <div>
-                  <div style="font-weight: 700; color: #1e3a8a;">⚖️ เพิ่มลูกหนี้ ก่อนฟ้อง</div>
-                  <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">สำหรับส่งเรื่องฝ่ายกฎหมาย, ค่าปรับสัญญาเช่า & ยอดผิดนัด</div>
-                </div>
-              </label>
-
-              <label id="lblCatCourt" style="border: 1px solid #cbd5e1; background: #fff; padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; transition: all 0.2s;">
-                <input type="radio" name="newDebtorCategory" id="catCourt" value="court" style="margin-top: 3px;">
-                <div>
-                  <div style="font-weight: 700; color: #0f172a;">🏛️ เพิ่มลูกหนี้ คดี</div>
-                  <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">สำหรับบันทึกคดีดำ/แดง, คำพิพากษาศาล & การผ่อนชำระ</div>
-                </div>
-              </label>
-            </div>
+          <!-- Category Selector (Pre-Litigation Only) -->
+          <div class="form-group" style="margin-bottom: 1.25rem; display: none;">
+            <input type="radio" name="newDebtorCategory" id="catPreLit" value="prelit" checked>
           </div>
 
           <!-- Section 1: Pre-Litigation Form (8 exact fields) -->
@@ -635,7 +616,7 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">อัตราดอกเบี้ยปรับก่อนฟ้อง (% ต่อเดือน)</label>
+                <label class="form-label">ค่าปรับตามสัญญา (% ต่อเดือน)</label>
                 <input type="number" id="newPreLitigationRate" class="form-control" value="1.5" step="any" min="0">
               </div>
               <div class="form-group">
@@ -650,7 +631,7 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label" id="lblNewRentalPenaltyFee">จำนวนเงินค่าปรับสัญญาเช่า (บาท)</label>
+                <label class="form-label" id="lblNewRentalPenaltyFee">เงินประกันสัญญา (บาท)</label>
                 <input type="text" inputmode="decimal" id="newRentalPenaltyFee" class="form-control" placeholder="เช่น 15,000.00 หรือ 500.00">
               </div>
               <div class="form-group">
@@ -774,6 +755,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260813_107"></script>
+  <script src="app.js?v=20260813_108"></script>
 </body>
 </html>

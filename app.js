@@ -258,15 +258,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.getElementById('preLitigationTableBody');
     const noticeText = document.getElementById('preLitCalcNoticeText');
     
+    // 1. Inputs
     const preDebt = parseFormattedNumber(document.getElementById('preLitigationDebt')?.value) || parseFormattedNumber(document.getElementById('principalAmount')?.value) || 0;
-    const rawPenaltyVal = parseFormattedNumber(document.getElementById('rentalPenaltyFee')?.value) || 0;
+    const securityDeposit = parseFormattedNumber(document.getElementById('rentalPenaltyFee')?.value) || 0; // เงินประกันสัญญา
     const penaltyType = document.getElementById('rentalPenaltyType')?.value || 'flat';
+    const contractPenaltyRateInput = parseFloat(document.getElementById('preLitigationInterestRate')?.value);
+    const contractPenaltyRate = !isNaN(contractPenaltyRateInput) ? contractPenaltyRateInput : 0;
+
+    // 2. Dates & duration
     const defaultDateStr = document.getElementById('preLitDefaultDate')?.value || document.getElementById('defaultDate')?.value || '2020-01-01';
-    
     let filingDateStr = document.getElementById('preLitFilingDate')?.value || document.getElementById('filingDate')?.value;
     const calcTargetStr = document.getElementById('calcTargetDate')?.value || todayStr;
 
-    // Fallback filing date if empty or before default date
     let dStart = parseDateLocal(defaultDateStr);
     let dEnd = parseDateLocal(filingDateStr);
 
@@ -277,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!dStart || !dEnd || dStart >= dEnd) {
       if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">โปรดระบุวันผิดนัดชำระและวันฟ้องคดี/วันคำนวณเพื่อแสดงตารางก่อนส่งฟ้อง</td></tr>`;
-      return { preDebt, effectivePenalty: rawPenaltyVal, totalAccruedInterest: 0, grandTotal: preDebt + rawPenaltyVal };
+      return { preDebt, effectivePenalty: 0, totalAccruedInterest: 0, grandTotal: preDebt };
     }
 
     syncPreLitCalcModeButtons();
@@ -295,189 +298,127 @@ document.addEventListener('DOMContentLoaded', () => {
           : `📅 คำนวณผิดนัดจาก <strong>${formatDateThai(defaultDateStr)}</strong> ถึง <strong>${formatDateThai(filingDateStr)}</strong> (โหมดคำนวณรายเดือน)`);
     }
 
-    let rowsHtml = '';
-    let totalAccruedInterest = 0;
-    const stages = interestStages.length > 0 ? interestStages : [{ startDate: defaultDateStr, rate: 5.0 }];
+    let totalDays = Math.round((dEnd - dStart) / (1000 * 3600 * 24));
+    if (totalDays <= 0) totalDays = 1;
 
-    const customRateInput = parseFloat(document.getElementById('preLitigationInterestRate')?.value);
-    const customRate = !isNaN(customRateInput) ? customRateInput : null;
-
-    if (preLitCalcMode === 'daily') {
-      let checkpoints = new Set();
-      checkpoints.add(formatDateIso(dStart));
-      checkpoints.add(formatDateIso(dEnd));
-
-      stages.forEach(stg => {
-        if (stg.startDate) {
-          const s = parseDateLocal(stg.startDate);
-          if (s && s >= dStart && s <= dEnd) checkpoints.add(stg.startDate);
-        }
-        if (stg.endDate) {
-          const e = parseDateLocal(stg.endDate);
-          if (e && e >= dStart && e <= dEnd) {
-            const next = new Date(e.getFullYear(), e.getMonth(), e.getDate() + 1);
-            if (next <= dEnd) checkpoints.add(formatDateIso(next));
-          }
-        }
-      });
-
-      const sortedCheckpoints = Array.from(checkpoints).sort((a, b) => parseDateLocal(a) - parseDateLocal(b));
-
-      for (let i = 0; i < sortedCheckpoints.length - 1; i++) {
-        const pStartStr = sortedCheckpoints[i];
-        const pEndStr = sortedCheckpoints[i + 1];
-        const pStart = parseDateLocal(pStartStr);
-        const pEnd = parseDateLocal(pEndStr);
-
-        let days = Math.round((pEnd - pStart) / (1000 * 3600 * 24));
-        if (days <= 0) days = 1;
-
-        const rate = customRate !== null ? customRate : getActiveRateForDate(pStartStr, stages);
-        const interestInPeriod = preDebt * (rate / 100) * (days / 30);
-        totalAccruedInterest += interestInPeriod;
-
-        rowsHtml += `
-          <tr>
-            <td><strong>ช่วงที่ ${i + 1}</strong></td>
-            <td>${formatDateThai(pStartStr)} - ${formatDateThai(pEndStr)}</td>
-            <td>${days} วัน <span style="font-size:0.8rem; color:var(--primary-blue, #1d4ed8); font-weight:600;">(รายวัน)</span></td>
-            <td>${rate}% ต่อเดือน</td>
-            <td>${formatCurrency(preDebt)}</td>
-            <td style="color: var(--accent-amber);">${formatCurrency(interestInPeriod)} <span style="font-size:0.75rem; font-weight:600; color:var(--accent-amber);">(รายวัน)</span></td>
-            <td><strong>${formatCurrency(preDebt + totalAccruedInterest)}</strong></td>
-          </tr>
-        `;
-      }
-    } else if (preLitCalcMode === 'flat') {
-      let days = Math.round((dEnd - dStart) / (1000 * 3600 * 24));
-      if (days <= 0) days = 1;
-
-      const flatFeePerDay = rawPenaltyVal;
-      const totalFlatPenalty = flatFeePerDay * days;
-      totalAccruedInterest = totalFlatPenalty;
-
-      rowsHtml += `
-        <tr>
-          <td><strong>คำนวณเหมาจ่ายต่อวัน</strong></td>
-          <td>${formatDateThai(defaultDateStr)} - ${formatDateThai(filingDateStr)}</td>
-          <td>${days} วัน <span style="font-size:0.8rem; color:var(--primary-blue, #1d4ed8); font-weight:600;">(เหมาจ่ายต่อวัน)</span></td>
-          <td>${formatCurrency(flatFeePerDay)} ฿/วัน</td>
-          <td>${formatCurrency(preDebt)}</td>
-          <td style="color: var(--accent-amber);">${formatCurrency(totalFlatPenalty)} <span style="font-size:0.75rem; font-weight:600; color:var(--accent-amber);">(เหมาจ่ายต่อวัน)</span></td>
-          <td><strong>${formatCurrency(preDebt + totalFlatPenalty)}</strong></td>
-        </tr>
-      `;
-    } else {
-      const startYear = dStart.getFullYear();
-      const startMonth = dStart.getMonth();
-      const endYear = dEnd.getFullYear();
-      const endMonth = dEnd.getMonth();
-
-      let diffMonths = (endYear - startYear) * 12 + (endMonth - startMonth);
-      const startDay = dStart.getDate();
-      const endDay = dEnd.getDate();
-
-      let totalMonths = diffMonths;
-      if (endDay > startDay) {
-        totalMonths += Math.round(((endDay - startDay) / 30) * 100) / 100;
-      } else if (endDay < startDay) {
-        totalMonths -= 1;
-        totalMonths += Math.round(((30 - (startDay - endDay)) / 30) * 100) / 100;
-      }
-
-      if (totalMonths <= 0) totalMonths = 1;
-      totalMonths = Math.round(totalMonths * 100) / 100;
-
-      const rate = customRate !== null ? customRate : (stages[0]?.rate || 5.0);
-      const interestInPeriod = preDebt * (rate / 100) * totalMonths;
-      totalAccruedInterest = interestInPeriod;
-
-      rowsHtml += `
-        <tr>
-          <td><strong>คำนวณสรุปรายเดือน</strong></td>
-          <td>${formatDateThai(defaultDateStr)} - ${formatDateThai(filingDateStr)}</td>
-          <td>${totalMonths} เดือน <span style="font-size:0.8rem; color:var(--primary-blue, #1d4ed8); font-weight:600;">(รายเดือน)</span></td>
-          <td>${rate}% ต่อเดือน</td>
-          <td>${formatCurrency(preDebt)}</td>
-          <td style="color: var(--accent-amber);">${formatCurrency(interestInPeriod)} <span style="font-size:0.75rem; font-weight:600; color:var(--accent-amber);">(รายเดือน)</span></td>
-          <td><strong>${formatCurrency(preDebt + totalAccruedInterest)}</strong></td>
-        </tr>
-      `;
-    }
-
-    // Update Label for Penalty Input
-    const lblFee = document.getElementById('lblRentalPenaltyFee');
-    const inputFee = document.getElementById('rentalPenaltyFee');
-    if (lblFee && inputFee) {
-      if (penaltyType === 'daily') {
-        lblFee.innerText = 'อัตราค่าปรับรายวัน (บาท/วัน)';
-        if (!inputFee.value && inputFee.getAttribute('data-last-type') !== 'daily') {
-          inputFee.placeholder = 'เช่น 500 หรือ 100 บาท/วัน';
-        }
-      } else if (penaltyType === 'monthly') {
-        lblFee.innerText = 'อัตราค่าปรับรายเดือน (บาท/เดือน)';
-        if (!inputFee.value && inputFee.getAttribute('data-last-type') !== 'monthly') {
-          inputFee.placeholder = 'เช่น 2000 บาท/เดือน';
-        }
-      } else {
-        lblFee.innerText = 'จำนวนเงินค่าปรับ (เหมาจ่ายต่อวัน - บาท)';
-        if (!inputFee.value && inputFee.getAttribute('data-last-type') !== 'flat') {
-          inputFee.placeholder = 'เช่น 15000.00 (เหมาจ่ายต่อวัน)';
-        }
-      }
-      inputFee.setAttribute('data-last-type', penaltyType);
-    }
-
-    updatePreLitigationFieldStates();
-
-    let totalDaysForPenalty = Math.round((dEnd - dStart) / (1000 * 3600 * 24));
-    if (totalDaysForPenalty <= 0) totalDaysForPenalty = 1;
-
-    let totalMonthsForPenalty = (dEnd.getFullYear() - dStart.getFullYear()) * 12 + (dEnd.getMonth() - dStart.getMonth());
+    let totalMonths = (dEnd.getFullYear() - dStart.getFullYear()) * 12 + (dEnd.getMonth() - dStart.getMonth());
     if (dEnd.getDate() >= dStart.getDate()) {
-      totalMonthsForPenalty += Math.round(((dEnd.getDate() - dStart.getDate()) / 30) * 100) / 100;
+      totalMonths += Math.round(((dEnd.getDate() - dStart.getDate()) / 30) * 100) / 100;
     }
-    if (totalMonthsForPenalty <= 0) totalMonthsForPenalty = 1;
+    if (totalMonths <= 0) totalMonths = 1;
+    totalMonths = Math.round(totalMonths * 100) / 100;
 
-    let effectivePenalty = rawPenaltyVal;
-    let penaltyLabelText = 'ค่าปรับเฉพาะสัญญาเช่า (แบบเหมาจ่าย)';
-    if (penaltyType === 'daily') {
-      effectivePenalty = rawPenaltyVal * totalDaysForPenalty;
-      penaltyLabelText = `ค่าปรับผิดนัดรายวัน (${formatCurrency(rawPenaltyVal)} บาท/วัน × ${totalDaysForPenalty} วัน)`;
-    } else if (penaltyType === 'monthly') {
-      effectivePenalty = rawPenaltyVal * totalMonthsForPenalty;
-      penaltyLabelText = `ค่าปรับผิดนัดรายเดือน (${formatCurrency(rawPenaltyVal)} บาท/เดือน × ${totalMonthsForPenalty} เดือน)`;
+    // 3. Gross Contract Penalty calculation
+    let grossPenalty = 0;
+    let penaltyLabelText = '';
+
+    if (contractPenaltyRate > 0) {
+      if (penaltyType === 'daily') {
+        grossPenalty = preDebt * (contractPenaltyRate / 100) * (totalDays / 30);
+        penaltyLabelText = `ค่าปรับตามสัญญา (${contractPenaltyRate}% ต่อเดือน × ${totalDays} วัน)`;
+      } else {
+        grossPenalty = preDebt * (contractPenaltyRate / 100) * totalMonths;
+        penaltyLabelText = `ค่าปรับตามสัญญา (${contractPenaltyRate}% ต่อเดือน × ${totalMonths} เดือน)`;
+      }
     }
 
-    if (effectivePenalty > 0) {
-      const penaltyModeLabel = penaltyType === 'daily' ? '(ค่าปรับรายวัน)' : (penaltyType === 'monthly' ? '(ค่าปรับรายเดือน)' : '(ค่าปรับเหมาจ่าย)');
+    // 4. Net Principal after deducting Security Deposit
+    const netBalanceAfterDeposit = Math.max(0, (preDebt + grossPenalty) - securityDeposit);
+
+    // 5. Pre-litigation Default Interest at 5.0% per year on Net Balance
+    const defaultInterestRate = 5.0; // ดอกเบี้ยผิดนัด 5% ต่อปี
+    let preLitigationDefaultInterest = 0;
+
+    if (preLitCalcMode === 'monthly') {
+      preLitigationDefaultInterest = netBalanceAfterDeposit * (defaultInterestRate / 100) * (totalMonths / 12);
+    } else {
+      preLitigationDefaultInterest = netBalanceAfterDeposit * (defaultInterestRate / 100) * (totalDays / 365);
+    }
+
+    const grandTotal = netBalanceAfterDeposit + preLitigationDefaultInterest;
+
+    // 6. Build Table Rows
+    let rowsHtml = '';
+
+    // Row 1: Base Debt
+    rowsHtml += `
+      <tr>
+        <td><strong>1. ยอดหนี้ก่อนส่งฟ้องตั้งต้น</strong></td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>${formatCurrency(preDebt)}</td>
+        <td>-</td>
+        <td><strong>${formatCurrency(preDebt)}</strong></td>
+      </tr>
+    `;
+
+    // Row 2: Contract Penalty (if any)
+    if (grossPenalty > 0) {
       rowsHtml += `
         <tr class="payment-row">
-          <td><strong>ค่าปรับสัญญาเช่า</strong></td>
+          <td><strong>2. ค่าปรับตามสัญญา</strong></td>
           <td>${penaltyLabelText}</td>
-          <td>${penaltyType === 'daily' ? totalDaysForPenalty + ' วัน (รายวัน)' : (penaltyType === 'monthly' ? totalMonthsForPenalty + ' เดือน (รายเดือน)' : '- (เหมาจ่าย)')}</td>
+          <td>${penaltyType === 'daily' ? totalDays + ' วัน' : totalMonths + ' เดือน'}</td>
+          <td>${contractPenaltyRate}% ต่อเดือน</td>
           <td>-</td>
-          <td>-</td>
-          <td style="color: var(--accent-rose); font-weight:600;">${formatCurrency(effectivePenalty)} <span style="font-size:0.75rem; font-weight:700; color:var(--accent-rose);">${penaltyModeLabel}</span></td>
-          <td><strong>${formatCurrency(preDebt + totalAccruedInterest + effectivePenalty)}</strong></td>
+          <td style="color: var(--accent-rose); font-weight:600;">+${formatCurrency(grossPenalty)}</td>
+          <td><strong>${formatCurrency(preDebt + grossPenalty)}</strong></td>
         </tr>
       `;
     }
 
-    const grandTotal = preDebt + totalAccruedInterest + effectivePenalty;
-    const calcModeTag = preLitCalcMode === 'daily' ? '(รายวัน)' : '(รายเดือน)';
+    // Row 3: Security Deposit Deduction (if any)
+    if (securityDeposit > 0) {
+      rowsHtml += `
+        <tr style="background: rgba(225, 29, 72, 0.04);">
+          <td><strong>3. หักเงินประกันสัญญา</strong></td>
+          <td>หักลบเงินประกันสัญญาเช่า</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td style="color: #dc2626; font-weight:600;">-${formatCurrency(securityDeposit)}</td>
+          <td><strong>${formatCurrency(netBalanceAfterDeposit)}</strong></td>
+        </tr>
+      `;
+    }
+
+    // Row 4: Pre-Litigation Default Interest at 5% p.a.
+    rowsHtml += `
+      <tr>
+        <td><strong>4. ดอกเบี้ยผิดนัดก่อนฟ้อง (5% ต่อปี)</strong></td>
+        <td>${formatDateThai(defaultDateStr)} - ${formatDateThai(filingDateStr)}</td>
+        <td>${preLitCalcMode === 'monthly' ? totalMonths + ' เดือน' : totalDays + ' วัน'}</td>
+        <td>5.0% ต่อปี</td>
+        <td>${formatCurrency(netBalanceAfterDeposit)}</td>
+        <td style="color: var(--accent-amber); font-weight:600;">+${formatCurrency(preLitigationDefaultInterest)} <span style="font-size:0.75rem;">(5% ต่อปี)</span></td>
+        <td style="color: var(--primary-gold); font-weight:700;"><strong>${formatCurrency(grandTotal)}</strong></td>
+      </tr>
+    `;
+
+    // Summary Row
     rowsHtml += `
       <tr style="background: rgba(59, 130, 246, 0.08); font-weight: 700;">
-        <td colspan="4" style="text-align: right; color: var(--primary-blue);">รวมยอดหนี้และค่าปรับผิดนัดก่อนส่งฟ้องกฎหมาย:</td>
+        <td colspan="4" style="text-align: right; color: var(--primary-blue);">รวมยอดหนี้ส่งฟ้องกฎหมาย (หลังหักเงินประกัน + ดอกเบี้ยผิดนัด 5% ต่อปี):</td>
         <td>${formatCurrency(preDebt)}</td>
-        <td style="color: var(--accent-rose);">${formatCurrency(totalAccruedInterest + effectivePenalty)} <span style="font-size:0.75rem; font-weight:600; color:var(--primary-blue);">${calcModeTag}</span></td>
+        <td style="color: var(--accent-amber);">${formatCurrency((grossPenalty - securityDeposit) + preLitigationDefaultInterest)}</td>
         <td style="color: var(--primary-gold); font-size: 1.05rem;">${formatCurrency(grandTotal)}</td>
       </tr>
     `;
 
     if (tbody) tbody.innerHTML = rowsHtml;
 
-    return { preDebt, effectivePenalty, totalAccruedInterest, grandTotal };
+    // Update Card Summaries
+    const summaryPreDebt = document.getElementById('summaryPreLitigationDebt');
+    if (summaryPreDebt) summaryPreDebt.innerText = formatCurrency(preDebt);
+
+    const summaryPenalty = document.getElementById('summaryPreLitigationPenalty');
+    if (summaryPenalty) summaryPenalty.innerText = formatCurrency(grossPenalty - securityDeposit);
+
+    const summaryGrand = document.getElementById('summaryPreLitigationGrandTotal');
+    if (summaryGrand) summaryGrand.innerText = formatCurrency(grandTotal);
+
+    return { preDebt, effectivePenalty: grossPenalty - securityDeposit, totalAccruedInterest: preLitigationDefaultInterest, grandTotal };
   }
 
   function renderTable(rows) {
@@ -1131,17 +1072,39 @@ document.addEventListener('DOMContentLoaded', () => {
   function saveLocalCase(payload) {
     const cases = getLocalCases();
     const todayStr = new Date().toISOString().split('T')[0];
-    const newCase = {
-      id: Date.now(),
-      ...payload,
-      savedAt: todayStr,
-      saved_at: todayStr,
-      updatedAt: todayStr,
-      updated_at: todayStr
-    };
-    cases.unshift(newCase);
-    localStorage.setItem('debtor_cases_db', JSON.stringify(cases));
-    return newCase;
+
+    const debtorName = (payload.defendantName || payload.preLitigationDebtor || '').trim().toLowerCase();
+    let existingIndex = -1;
+
+    if (debtorName) {
+      existingIndex = cases.findIndex(c => {
+        const name = (c.defendantName || c.preLitigationDebtor || '').trim().toLowerCase();
+        return name === debtorName;
+      });
+    }
+
+    if (existingIndex !== -1) {
+      cases[existingIndex] = {
+        ...cases[existingIndex],
+        ...payload,
+        updatedAt: todayStr,
+        updated_at: todayStr
+      };
+      localStorage.setItem('debtor_cases_db', JSON.stringify(cases));
+      return cases[existingIndex];
+    } else {
+      const newCase = {
+        id: Date.now(),
+        ...payload,
+        savedAt: todayStr,
+        saved_at: todayStr,
+        updatedAt: todayStr,
+        updated_at: todayStr
+      };
+      cases.unshift(newCase);
+      localStorage.setItem('debtor_cases_db', JSON.stringify(cases));
+      return newCase;
+    }
   }
 
   function deleteLocalCase(id) {
@@ -1173,21 +1136,27 @@ document.addEventListener('DOMContentLoaded', () => {
   function buildCasePayload() {
     const preDebtor = document.getElementById('preLitigationDebtorName')?.value;
     const defName = document.getElementById('defendantName')?.value;
-    const isCourtCase = !!(document.getElementById('caseBlackNo')?.value || document.getElementById('caseRedNo')?.value);
+    const blackNo = document.getElementById('caseBlackNo')?.value || '';
+    const redNo = document.getElementById('caseRedNo')?.value || '';
+    const judgmentDate = document.getElementById('judgmentDate')?.value || '';
+    
+    // Requirement 4: Automatically convert category to 'court' when court details are populated!
+    const isCourtCase = !!(blackNo || redNo || judgmentDate);
+    const category = isCourtCase ? 'court' : (currentCaseCategory || 'prelit');
     
     return {
-      category:           currentCaseCategory || (isCourtCase ? 'court' : 'prelit'),
-      caseBlackNo:        document.getElementById('caseBlackNo')?.value || '',
-      caseRedNo:          document.getElementById('caseRedNo')?.value   || '',
+      category,
+      caseBlackNo:        blackNo,
+      caseRedNo:          redNo,
       plaintiffName:      document.getElementById('plaintiffName')?.value || '',
       defendantName:      defName || preDebtor || '',
       preLitigationDebtor: preDebtor || defName || '',
       preLitigationRate:  parseFloat(document.getElementById('preLitigationInterestRate')?.value) || 1.5,
       rentalPenaltyType:  document.getElementById('rentalPenaltyType')?.value || 'flat',
-      principalAmount:    parseFormattedNumber(document.getElementById('principalAmount')?.value) || 0,
+      principalAmount:    parseFormattedNumber(document.getElementById('principalAmount')?.value) || parseFormattedNumber(document.getElementById('preLitigationDebt')?.value) || 0,
       defaultDate:        document.getElementById('defaultDate')?.value  || '',
       filingDate:         document.getElementById('filingDate')?.value   || '',
-      judgmentDate:       document.getElementById('judgmentDate')?.value || '',
+      judgmentDate:       judgmentDate,
       courtFeeAwarded:    parseFormattedNumber(document.getElementById('courtFeeAwarded')?.value) || 0,
       attorneyFeeAwarded: 0,
       preLitigationDebt:  parseFormattedNumber(document.getElementById('preLitigationDebt')?.value) || 0,
