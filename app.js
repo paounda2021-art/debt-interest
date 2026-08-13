@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (days <= 0) days = 1;
 
         const rate = customRate !== null ? customRate : getActiveRateForDate(pStartStr, stages);
-        const interestInPeriod = preDebt * (rate / 100) * (days / 365);
+        const interestInPeriod = preDebt * (rate / 100) * (days / 30);
         totalAccruedInterest += interestInPeriod;
 
         rowsHtml += `
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td><strong>ช่วงที่ ${i + 1}</strong></td>
             <td>${formatDateThai(pStartStr)} - ${formatDateThai(pEndStr)}</td>
             <td>${days} วัน <span style="font-size:0.8rem; color:var(--primary-blue, #1d4ed8); font-weight:600;">(รายวัน)</span></td>
-            <td>${rate}% ต่อปี</td>
+            <td>${rate}% ต่อเดือน</td>
             <td>${formatCurrency(preDebt)}</td>
             <td style="color: var(--accent-amber);">${formatCurrency(interestInPeriod)} <span style="font-size:0.75rem; font-weight:600; color:var(--accent-amber);">(รายวัน)</span></td>
             <td><strong>${formatCurrency(preDebt + totalAccruedInterest)}</strong></td>
@@ -366,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
       totalMonths = Math.round(totalMonths * 100) / 100;
 
       const rate = customRate !== null ? customRate : (stages[0]?.rate || 5.0);
-      const interestInPeriod = preDebt * (rate / 100) * (totalMonths / 12);
+      const interestInPeriod = preDebt * (rate / 100) * totalMonths;
       totalAccruedInterest = interestInPeriod;
 
       rowsHtml += `
@@ -374,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td><strong>คำนวณสรุปรายเดือน</strong></td>
           <td>${formatDateThai(defaultDateStr)} - ${formatDateThai(filingDateStr)}</td>
           <td>${totalMonths} เดือน <span style="font-size:0.8rem; color:var(--primary-blue, #1d4ed8); font-weight:600;">(รายเดือน)</span></td>
-          <td>${rate}% ต่อปี</td>
+          <td>${rate}% ต่อเดือน</td>
           <td>${formatCurrency(preDebt)}</td>
           <td style="color: var(--accent-amber);">${formatCurrency(interestInPeriod)} <span style="font-size:0.75rem; font-weight:600; color:var(--accent-amber);">(รายเดือน)</span></td>
           <td><strong>${formatCurrency(preDebt + totalAccruedInterest)}</strong></td>
@@ -1868,7 +1868,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div><strong>โจทก์ / ผู้ให้เช่า:</strong> ${plaintiff}</div>
             <div><strong>วันผิดนัดชำระ:</strong> ${formatDateThai(defaultDateStr)}</div>
             <div><strong>วันเสนอส่งฟ้อง:</strong> ${formatDateThai(filingDateStr)}</div>
-            <div><strong>อัตราดอกเบี้ยก่อนฟ้อง:</strong> ${preRate}% ต่อปี</div>
+            <div><strong>อัตราดอกเบี้ยก่อนฟ้อง:</strong> ${preRate}% ต่อเดือน</div>
             <div><strong>หมายเหตุส่งฟ้อง:</strong> ${notes}</div>
           </div>
         </div>
