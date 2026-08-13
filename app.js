@@ -1475,12 +1475,18 @@ document.addEventListener('DOMContentLoaded', () => {
   if (rentalPenaltyTypeSelect) {
     rentalPenaltyTypeSelect.addEventListener('change', () => {
       const val = rentalPenaltyTypeSelect.value;
-      if (val === 'daily') {
-        preLitCalcMode = 'daily';
-      } else if (val === 'monthly') {
-        preLitCalcMode = 'monthly';
+      const penaltyInput = document.getElementById('rentalPenaltyFee');
+      const rateInput = document.getElementById('preLitigationInterestRate');
+
+      if (val === 'daily' || val === 'monthly') {
+        preLitCalcMode = val;
+        if (penaltyInput) penaltyInput.value = '0.00';
+        if (rateInput && (!rateInput.value || parseFloat(rateInput.value) === 0)) {
+          rateInput.value = '1.5';
+        }
       } else if (val === 'flat') {
         preLitCalcMode = 'flat';
+        if (rateInput) rateInput.value = '0';
       }
       syncPreLitCalcModeButtons();
       calculateAndRender();
@@ -1545,12 +1551,24 @@ document.addEventListener('DOMContentLoaded', () => {
   if (newRentalPenaltyType && lblNewRentalPenaltyFee) {
     newRentalPenaltyType.addEventListener('change', () => {
       const val = newRentalPenaltyType.value;
+      const newPenaltyInput = document.getElementById('newRentalPenaltyFee');
+      const newRateInput = document.getElementById('newPreLitigationRate');
+
       if (val === 'daily') {
         lblNewRentalPenaltyFee.innerText = 'อัตราค่าปรับสัญญาเช่ารายวัน (บาท/วัน)';
+        if (newPenaltyInput) newPenaltyInput.value = '0.00';
+        if (newRateInput && (!newRateInput.value || parseFloat(newRateInput.value) === 0)) {
+          newRateInput.value = '1.5';
+        }
       } else if (val === 'monthly') {
         lblNewRentalPenaltyFee.innerText = 'อัตราค่าปรับสัญญาเช่ารายเดือน (บาท/เดือน)';
+        if (newPenaltyInput) newPenaltyInput.value = '0.00';
+        if (newRateInput && (!newRateInput.value || parseFloat(newRateInput.value) === 0)) {
+          newRateInput.value = '1.5';
+        }
       } else {
         lblNewRentalPenaltyFee.innerText = 'จำนวนเงินค่าปรับสัญญาเช่า (เหมาจ่ายต่อวัน - บาท)';
+        if (newRateInput) newRateInput.value = '0';
       }
       updatePreLitigationFieldStates();
     });
