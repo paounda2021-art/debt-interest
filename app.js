@@ -903,6 +903,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data.rentalPenaltyFee !== undefined && document.getElementById('rentalPenaltyFee')) {
       document.getElementById('rentalPenaltyFee').value = formatNumberWithCommas(data.rentalPenaltyFee);
     }
+    if (data.securityDeposit !== undefined && document.getElementById('securityDeposit')) {
+      document.getElementById('securityDeposit').value = formatNumberWithCommas(data.securityDeposit);
+    }
     if (data.defaultDate) {
       if (document.getElementById('defaultDate')) document.getElementById('defaultDate').value = data.defaultDate;
       if (document.getElementById('preLitDefaultDate')) document.getElementById('preLitDefaultDate').value = data.defaultDate;
@@ -1373,8 +1376,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auto-format money input fields with commas and 2 decimals on blur/input
   const moneyInputIds = [
-    'preLitigationDebt', 'rentalPenaltyFee', 'principalAmount', 'courtFeeAwarded',
-    'newPreLitigationDebt', 'newRentalPenaltyFee', 'newPrincipalAmount'
+    'preLitigationDebt', 'rentalPenaltyFee', 'securityDeposit', 'principalAmount', 'courtFeeAwarded',
+    'newPreLitigationDebt', 'newRentalPenaltyFee', 'newSecurityDeposit', 'newPrincipalAmount'
   ];
 
   moneyInputIds.forEach(id => {
@@ -1753,6 +1756,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const preLitRate = parseFloat(document.getElementById('newPreLitigationRate')?.value) || 1.5;
         const rentPenaltyType = document.getElementById('newRentalPenaltyType')?.value || 'flat';
         const rentPenalty = parseFormattedNumber(document.getElementById('newRentalPenaltyFee')?.value) || 0;
+        const securityDeposit = parseFormattedNumber(document.getElementById('newSecurityDeposit')?.value) || 0;
         const preLitNotes = document.getElementById('newPreLitigationNotes')?.value || '';
         const defaultDate = document.getElementById('newDefaultDate')?.value || '2020-01-01';
         const filingDate = document.getElementById('newFilingDate')?.value || '2021-01-01';
@@ -1762,6 +1766,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('preLitigationInterestRate')) document.getElementById('preLitigationInterestRate').value = preLitRate;
         if (document.getElementById('rentalPenaltyType')) document.getElementById('rentalPenaltyType').value = rentPenaltyType;
         if (document.getElementById('rentalPenaltyFee')) document.getElementById('rentalPenaltyFee').value = formatNumberWithCommas(rentPenalty);
+        if (document.getElementById('securityDeposit')) document.getElementById('securityDeposit').value = formatNumberWithCommas(securityDeposit);
         if (document.getElementById('preLitigationNotes')) document.getElementById('preLitigationNotes').value = preLitNotes;
         document.getElementById('defaultDate').value = defaultDate;
         document.getElementById('filingDate').value = filingDate;
