@@ -1554,22 +1554,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (rateInput) {
         rateInput.value = '0';
         rateInput.disabled = true;
-        rateInput.style.background = '#f1f5f9';
-        rateInput.style.color = '#94a3b8';
-        rateInput.style.cursor = 'not-allowed';
+        rateInput.classList.add('disabled-field');
+        rateInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important;');
       }
       if (penaltyInput) {
         penaltyInput.disabled = false;
-        penaltyInput.style.background = '#ffffff';
-        penaltyInput.style.color = '#0f172a';
-        penaltyInput.style.cursor = 'text';
+        penaltyInput.classList.remove('disabled-field');
+        penaltyInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important;');
       }
     } else {
       if (rateInput) {
         rateInput.disabled = false;
-        rateInput.style.background = '#ffffff';
-        rateInput.style.color = '#0f172a';
-        rateInput.style.cursor = 'text';
+        rateInput.classList.remove('disabled-field');
+        rateInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important;');
         if (!rateInput.value || parseFloat(rateInput.value) === 0) {
           rateInput.value = '1.5';
         }
@@ -1577,9 +1574,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (penaltyInput) {
         penaltyInput.value = '0.00';
         penaltyInput.disabled = true;
-        penaltyInput.style.background = '#f1f5f9';
-        penaltyInput.style.color = '#94a3b8';
-        penaltyInput.style.cursor = 'not-allowed';
+        penaltyInput.classList.add('disabled-field');
+        penaltyInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important;');
       }
     }
 
@@ -1592,22 +1588,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (newRateInput) {
         newRateInput.value = '0';
         newRateInput.disabled = true;
-        newRateInput.style.background = '#f1f5f9';
-        newRateInput.style.color = '#94a3b8';
-        newRateInput.style.cursor = 'not-allowed';
+        newRateInput.classList.add('disabled-field');
+        newRateInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important;');
       }
       if (newPenaltyInput) {
         newPenaltyInput.disabled = false;
-        newPenaltyInput.style.background = '#ffffff';
-        newPenaltyInput.style.color = '#0f172a';
-        newPenaltyInput.style.cursor = 'text';
+        newPenaltyInput.classList.remove('disabled-field');
+        newPenaltyInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important;');
       }
     } else {
       if (newRateInput) {
         newRateInput.disabled = false;
-        newRateInput.style.background = '#ffffff';
-        newRateInput.style.color = '#0f172a';
-        newRateInput.style.cursor = 'text';
+        newRateInput.classList.remove('disabled-field');
+        newRateInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important;');
         if (!newRateInput.value || parseFloat(newRateInput.value) === 0) {
           newRateInput.value = '1.5';
         }
@@ -1615,9 +1608,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (newPenaltyInput) {
         newPenaltyInput.value = '0.00';
         newPenaltyInput.disabled = true;
-        newPenaltyInput.style.background = '#f1f5f9';
-        newPenaltyInput.style.color = '#94a3b8';
-        newPenaltyInput.style.cursor = 'not-allowed';
+        newPenaltyInput.classList.add('disabled-field');
+        newPenaltyInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important;');
       }
     }
   }

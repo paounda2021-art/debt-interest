@@ -283,6 +283,17 @@ body {
 
 .form-control::placeholder { color: var(--text-muted); }
 
+.form-control:disabled,
+.form-control[disabled],
+.form-control.disabled-field {
+  background-color: #e2e8f0 !important;
+  color: #64748b !important;
+  border-color: #cbd5e1 !important;
+  cursor: not-allowed !important;
+  opacity: 0.85 !important;
+  box-shadow: none !important;
+}
+
 select.form-control { cursor: pointer; background-image: none; }
 
 /* ==============================
