@@ -50,6 +50,7 @@ function createSchema() {
       attorney_fee            REAL    DEFAULT 0,
       pre_litigation_debt      REAL    DEFAULT 0,
       rental_penalty_fee      REAL    DEFAULT 0,
+      security_deposit        REAL    DEFAULT 0,
       pre_litigation_notes     TEXT    DEFAULT '',
       pre_litigation_debtor   TEXT    DEFAULT '',
       pre_litigation_rate     REAL    DEFAULT 7.5,
@@ -63,6 +64,7 @@ function createSchema() {
   // Migrations for existing database
   try { db.run(`ALTER TABLE cases ADD COLUMN pre_litigation_debt REAL DEFAULT 0`); } catch (e) {}
   try { db.run(`ALTER TABLE cases ADD COLUMN rental_penalty_fee REAL DEFAULT 0`); } catch (e) {}
+  try { db.run(`ALTER TABLE cases ADD COLUMN security_deposit REAL DEFAULT 0`); } catch (e) {}
   try { db.run(`ALTER TABLE cases ADD COLUMN pre_litigation_notes TEXT DEFAULT ''`); } catch (e) {}
   try { db.run(`ALTER TABLE cases ADD COLUMN pre_litigation_debtor TEXT DEFAULT ''`); } catch (e) {}
   try { db.run(`ALTER TABLE cases ADD COLUMN pre_litigation_rate REAL DEFAULT 1.5`); } catch (e) {}
@@ -102,6 +104,7 @@ function rowToCase(row) {
     attorneyFeeAwarded: row.attorney_fee,
     preLitigationDebt:    row.pre_litigation_debt || 0,
     rentalPenaltyFee:     row.rental_penalty_fee || 0,
+    securityDeposit:      row.security_deposit || 0,
     preLitigationNotes:   row.pre_litigation_notes || '',
     preLitigationDebtor:  row.pre_litigation_debtor || '',
     preLitigationRate:    row.pre_litigation_rate !== undefined ? row.pre_litigation_rate : 1.5,
@@ -152,12 +155,12 @@ function insertCase(data) {
     INSERT INTO cases
       (case_black_no, case_red_no, plaintiff_name, defendant_name,
        principal_amount, default_date, filing_date, judgment_date,
-       court_fee, attorney_fee, pre_litigation_debt, rental_penalty_fee,
+       court_fee, attorney_fee, pre_litigation_debt, rental_penalty_fee, security_deposit,
        pre_litigation_notes, pre_litigation_debtor, pre_litigation_rate,
        rental_penalty_type, category,
        interest_stages, partial_payments,
        saved_at, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `, [
     data.caseBlackNo    || '',
     data.caseRedNo      || '',
@@ -171,6 +174,7 @@ function insertCase(data) {
     data.attorneyFeeAwarded || 0,
     data.preLitigationDebt  || 0,
     data.rentalPenaltyFee   || 0,
+    data.securityDeposit    || 0,
     data.preLitigationNotes || '',
     data.preLitigationDebtor || '',
     data.preLitigationRate !== undefined ? data.preLitigationRate : 7.5,
@@ -192,7 +196,7 @@ function updateCase(id, data) {
     UPDATE cases SET
       case_black_no = ?, case_red_no = ?, plaintiff_name = ?, defendant_name = ?,
       principal_amount = ?, default_date = ?, filing_date = ?, judgment_date = ?,
-      court_fee = ?, attorney_fee = ?, pre_litigation_debt = ?, rental_penalty_fee = ?,
+      court_fee = ?, attorney_fee = ?, pre_litigation_debt = ?, rental_penalty_fee = ?, security_deposit = ?,
       pre_litigation_notes = ?, pre_litigation_debtor = ?, pre_litigation_rate = ?,
       rental_penalty_type = ?, category = ?,
       interest_stages = ?, partial_payments = ?,
@@ -211,6 +215,7 @@ function updateCase(id, data) {
     data.attorneyFeeAwarded || 0,
     data.preLitigationDebt  || 0,
     data.rentalPenaltyFee   || 0,
+    data.securityDeposit    || 0,
     data.preLitigationNotes || '',
     data.preLitigationDebtor || '',
     data.preLitigationRate !== undefined ? data.preLitigationRate : 1.5,

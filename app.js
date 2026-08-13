@@ -1997,8 +1997,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function printPreLitigationReport() {
     const preDebtor = document.getElementById('preLitigationDebtorName')?.value || document.getElementById('defendantName')?.value || '-';
     const plaintiff = document.getElementById('plaintiffName')?.value || '-';
-    const preDebt = parseFloat(document.getElementById('preLitigationDebt')?.value) || 0;
-    const rentPenalty = parseFloat(document.getElementById('rentalPenaltyFee')?.value) || 0;
+    const preDebt = parseFormattedNumber(document.getElementById('preLitigationDebt')?.value) || 0;
+    const rentPenalty = parseFormattedNumber(document.getElementById('rentalPenaltyFee')?.value) || 0;
+    const deposit = parseFormattedNumber(document.getElementById('securityDeposit')?.value) || 0;
     const preRate = parseFloat(document.getElementById('preLitigationInterestRate')?.value) || 1.5;
     const defaultDateStr = document.getElementById('defaultDate')?.value || '-';
     const filingDateStr = document.getElementById('filingDate')?.value || todayStr;
@@ -2025,7 +2026,7 @@ document.addEventListener('DOMContentLoaded', () => {
           .sub-header { text-align: center; color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem; }
           .info-box { background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; }
           .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.95rem; }
-          .summary-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+          .summary-cards { display: grid; grid-template-columns: repeat(${deposit > 0 ? 4 : 3}, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
           .card-box { border: 1px solid #cbd5e1; padding: 1rem; border-radius: 8px; background: #fff; text-align: center; }
           .card-title { font-size: 0.82rem; color: #64748b; font-weight: bold; }
           .card-val { font-size: 1.3rem; font-weight: bold; margin-top: 4px; }
@@ -2051,7 +2052,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div><strong>วันผิดนัดชำระ:</strong> ${formatDateThai(defaultDateStr)}</div>
             <div><strong>วันเสนอส่งฟ้อง:</strong> ${formatDateThai(filingDateStr)}</div>
             <div><strong>อัตราดอกเบี้ยก่อนฟ้อง:</strong> ${preRate}% ต่อเดือน</div>
-            <div><strong>หมายเหตุส่งฟ้อง:</strong> ${notes}</div>
+            <div><strong>เงินประกันสัญญา:</strong> ${formatCurrency(deposit)}</div>
+            <div style="grid-column: span 2;"><strong>หมายเหตุส่งฟ้อง:</strong> ${notes}</div>
           </div>
         </div>
 
@@ -2065,6 +2067,12 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="card-title">คิดค่าปรับ (เฉพาะค่าเช่า)</div>
             <div class="card-val" style="color: #e11d48;">${formatCurrency(rentPenalty)}</div>
           </div>
+          ${deposit > 0 ? `
+          <div class="card-box" style="border-color: #dc2626; background: #fef2f2;">
+            <div class="card-title" style="color: #dc2626;">หักเงินประกันสัญญา</div>
+            <div class="card-val" style="color: #dc2626;">-${formatCurrency(deposit)}</div>
+          </div>
+          ` : ''}
           <div class="card-box" style="border-color: #d97706; background: #fffbeb;">
             <div class="card-title" style="color: #d97706;">ยอดรวมส่งฟ้องกฎหมาย</div>
             <div class="card-val" style="color: #d97706;">${document.getElementById('displayPreLitigationTotal')?.innerText || '0.00 ฿'}</div>
