@@ -1367,11 +1367,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (btnOpenSavedCasesModal)  btnOpenSavedCasesModal.addEventListener('click', () => openSavedCasesModal());
-  if (btnCloseSavedCasesModal) btnCloseSavedCasesModal.addEventListener('click', closeSavedCasesModal);
-  if (btnCloseSavedCases)      btnCloseSavedCases.addEventListener('click', closeSavedCasesModal);
-  if (btnSaveCurrentCase)      btnSaveCurrentCase.addEventListener('click', saveCurrentCase);
-  if (btnModalSaveCurrentCase) btnModalSaveCurrentCase.addEventListener('click', saveCurrentCase);
+  const btnSavePreLitigation = document.getElementById('btnSavePreLitigation');
+  const btnSavePreLitigationSummary = document.getElementById('btnSavePreLitigationSummary');
+
+  async function savePreLitigationCase() {
+    const debtorName = document.getElementById('preLitigationDebtorName')?.value?.trim() || document.getElementById('defendantName')?.value?.trim();
+    if (!debtorName) {
+      alert('⚠️ โปรดระบุ "ชื่อลูกหนี้ / ผู้เช่า (Debtor Name)" ก่อนบันทึกส่งฝ่ายกฎหมาย');
+      document.getElementById('preLitigationDebtorName')?.focus();
+      return;
+    }
+    await saveCurrentCase();
+    showToast(`⚖️ บันทึกข้อมูลลูกหนี้ (${debtorName}) ส่งฝ่ายกฎหมายเรียบร้อยแล้ว!`);
+  }
+
+  if (btnSaveCurrentCase)          btnSaveCurrentCase.addEventListener('click', saveCurrentCase);
+  if (btnModalSaveCurrentCase)     btnModalSaveCurrentCase.addEventListener('click', saveCurrentCase);
+  if (btnSavePreLitigation)        btnSavePreLitigation.addEventListener('click', savePreLitigationCase);
+  if (btnSavePreLitigationSummary) btnSavePreLitigationSummary.addEventListener('click', savePreLitigationCase);
 
   updateSavedCasesBadge();
 

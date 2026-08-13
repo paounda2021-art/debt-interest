@@ -72,6 +72,9 @@
               <i data-lucide="scale"></i> ข้อมูลก่อนส่งฟ้อง (สำหรับส่งฝ่ายกฎหมาย)
             </h2>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-primary no-print" id="btnSavePreLitigation" style="background: linear-gradient(135deg, #10b981, #047857); color: white; border: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.2);">
+                <i data-lucide="save"></i> บันทึกข้อมูลส่งฝ่ายกฎหมาย
+              </button>
               <button type="button" class="btn btn-secondary btn-danger-sm no-print" id="btnPrintPreLitigationReport" style="background: var(--royal); color: white; border: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
                 <i data-lucide="printer"></i> พิมพ์สรุปส่งฝ่ายกฎหมาย
               </button>
@@ -150,8 +153,13 @@
             <h2 class="card-title" style="color: var(--primary-blue);">
               <i data-lucide="file-badge-2"></i> สรุปรายการข้อมูลก่อนส่งฟ้องกฎหมาย (Pre-Litigation Claim Summary)
             </h2>
-            <div id="displayPreLitigationDebtor" style="font-size: 0.92rem; font-weight: 700; color: var(--primary-blue); background: var(--card-bg, #fff); padding: 4px 12px; border-radius: 16px; border: 1px solid var(--border-color, #cbd5e1);">
-              👤 ลูกหนี้ / ผู้เช่า: -
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <div id="displayPreLitigationDebtor" style="font-size: 0.92rem; font-weight: 700; color: var(--primary-blue); background: var(--card-bg, #fff); padding: 4px 12px; border-radius: 16px; border: 1px solid var(--border-color, #cbd5e1);">
+                👤 ลูกหนี้ / ผู้เช่า: -
+              </div>
+              <button type="button" class="btn btn-primary btn-sm no-print" id="btnSavePreLitigationSummary" style="background: linear-gradient(135deg, #10b981, #047857); color: white; font-weight: 600; padding: 5px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;">
+                <i data-lucide="save"></i> บันทึกข้อมูลส่งฝ่ายกฎหมาย
+              </button>
             </div>
           </div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; padding: 0.5rem 0;">
