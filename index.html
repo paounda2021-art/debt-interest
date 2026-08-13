@@ -94,7 +94,7 @@
               <input type="text" id="preLitigationDebtorName" class="form-control" placeholder="เช่น นายสมคิด มั่งมี / บริษัท ผู้เช่า จำกัด">
             </div>
             <div class="form-group">
-              <label class="form-label">อัตราดอกเบี้ยผิดนัดก่อนฟ้อง (% ต่อเดือน)</label>
+              <label class="form-label">อัตราดอกเบี้ยปรับก่อนฟ้อง (% ต่อเดือน)</label>
               <input type="number" id="preLitigationInterestRate" class="form-control" placeholder="เช่น 1.5 หรือ 7.5" value="1.5" step="any" min="0">
             </div>
           </div>
@@ -621,22 +621,22 @@
           <div id="secPreLitForm">
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">1. ชื่อลูกหนี้ / ผู้เช่า *</label>
+                <label class="form-label">ชื่อลูกหนี้ / ผู้เช่า *</label>
                 <input type="text" id="newDebtorName" class="form-control" placeholder="เช่น นายสมคิด มั่งมี / บริษัท ผู้เช่า จำกัด">
               </div>
               <div class="form-group">
-                <label class="form-label">2. ยอดหนี้ก่อนส่งฟ้อง (บาท) *</label>
+                <label class="form-label">ยอดหนี้ก่อนส่งฟ้อง (บาท) *</label>
                 <input type="text" inputmode="decimal" id="newPreLitigationDebt" class="form-control" placeholder="เช่น 250,000.00" value="100,000.00">
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">3. อัตราดอกเบี้ยก่อนฟ้อง (% ต่อเดือน)</label>
+                <label class="form-label">อัตราดอกเบี้ยปรับก่อนฟ้อง (% ต่อเดือน)</label>
                 <input type="number" id="newPreLitigationRate" class="form-control" value="1.5" step="any" min="0">
               </div>
               <div class="form-group">
-                <label class="form-label">4. รูปแบบคิดค่าปรับสัญญาเช่า</label>
+                <label class="form-label">รูปแบบคิดค่าปรับสัญญาเช่า</label>
                 <select id="newRentalPenaltyType" class="form-control">
                   <option value="flat">แบบเหมาจ่ายรวม (บาท)</option>
                   <option value="daily">แบบรายวัน (บาท/วัน)</option>
@@ -647,22 +647,22 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label" id="lblNewRentalPenaltyFee">5. จำนวนเงินค่าปรับสัญญาเช่า (บาท)</label>
+                <label class="form-label" id="lblNewRentalPenaltyFee">จำนวนเงินค่าปรับสัญญาเช่า (บาท)</label>
                 <input type="text" inputmode="decimal" id="newRentalPenaltyFee" class="form-control" placeholder="เช่น 15,000.00 หรือ 500.00">
               </div>
               <div class="form-group">
-                <label class="form-label">6. หมายเหตุส่งฟ้อง</label>
+                <label class="form-label">หมายเหตุส่งฟ้อง</label>
                 <input type="text" id="newPreLitigationNotes" class="form-control" placeholder="เช่น ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดรายวันตามสัญญาข้อ 5">
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">7. วันผิดนัดชำระ *</label>
+                <label class="form-label">วันผิดนัดชำระ *</label>
                 <input type="date" id="newDefaultDate" class="form-control" value="2020-01-01">
               </div>
               <div class="form-group">
-                <label class="form-label">8. วันเสนอเรื่องส่งฟ้อง *</label>
+                <label class="form-label">วันเสนอเรื่องส่งฟ้อง *</label>
                 <input type="date" id="newFilingDate" class="form-control" value="2021-01-01">
               </div>
             </div>
@@ -771,6 +771,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260813_100"></script>
+  <script src="app.js?v=20260813_101"></script>
 </body>
 </html>
