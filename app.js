@@ -397,9 +397,9 @@ document.addEventListener('DOMContentLoaded', () => {
           inputFee.placeholder = 'เช่น 2000 บาท/เดือน';
         }
       } else {
-        lblFee.innerText = 'จำนวนเงินค่าปรับ (เหมาจ่ายรวม - บาท)';
+        lblFee.innerText = 'จำนวนเงินค่าปรับ (เหมาจ่ายวัน - บาท)';
         if (!inputFee.value && inputFee.getAttribute('data-last-type') !== 'flat') {
-          inputFee.placeholder = 'เช่น 15000.00 (เหมาจ่ายรวม)';
+          inputFee.placeholder = 'เช่น 15000.00 (เหมาจ่ายวัน)';
         }
       }
       inputFee.setAttribute('data-last-type', penaltyType);
@@ -1508,7 +1508,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (val === 'monthly') {
         lblNewRentalPenaltyFee.innerText = 'อัตราค่าปรับสัญญาเช่ารายเดือน (บาท/เดือน)';
       } else {
-        lblNewRentalPenaltyFee.innerText = 'จำนวนเงินค่าปรับสัญญาเช่า (เหมาจ่ายรวม - บาท)';
+        lblNewRentalPenaltyFee.innerText = 'จำนวนเงินค่าปรับสัญญาเช่า (เหมาจ่ายวัน - บาท)';
       }
     });
   }
