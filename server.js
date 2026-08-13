@@ -86,7 +86,16 @@ app.delete('/api/cases/:id', (req, res) => {
   }
 });
 
-// ─── SPA Fallback: serve index.html for any unknown route ─────────
+// ─── SPA Fallback & API 404 / Error Handlers ───────────────────────
+app.use((err, req, res, next) => {
+  console.error('[Server Error]', err.stack || err.message);
+  res.status(500).json({ success: false, error: 'Server Error: ' + err.message });
+});
+
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ success: false, error: `API endpoint not found: ${req.method} ${req.path}` });
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });

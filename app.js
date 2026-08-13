@@ -1071,11 +1071,23 @@ document.addEventListener('DOMContentLoaded', () => {
     toast._timer = setTimeout(() => { toast.style.display = 'none'; }, 3500);
   }
 
+  // ─── Safe Fetch Helper ────────────────────────────────────────────
+  async function fetchJson(url, options = {}) {
+    const res = await fetch(url, options);
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await res.text();
+      console.error('[Fetch Non-JSON Response]', url, res.status, text);
+      throw new Error(`เซิร์ฟเวอร์ตอบกลับผิดพลาด (HTTP ${res.status}): โปรดรัน pm2 restart debt-interest`);
+    }
+    const json = await res.json();
+    return json;
+  }
+
   // ─── Badge ────────────────────────────────────────────────────────
   async function updateSavedCasesBadge() {
     try {
-      const res = await fetch(API);
-      const json = await res.json();
+      const json = await fetchJson(API);
       if (savedCasesCountBadge && json.count !== undefined) {
         savedCasesCountBadge.innerText = json.count;
       }
@@ -1116,17 +1128,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── Save (POST) ──────────────────────────────────────────────────
   async function saveCurrentCase() {
     const payload = buildCasePayload();
-    const defendant = payload.defendantName || 'ไม่ระบุ';
+    const defendant = payload.defendantName || payload.preLitigationDebtor || 'ไม่ระบุ';
     const caseNo    = payload.caseBlackNo   || '-';
     try {
-      const res  = await fetch(API, {
+      const json = await fetchJson(API, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(payload)
       });
-      const json = await res.json();
       if (!json.success) throw new Error(json.error);
-      showToast(`✅ บันทึกคดี ${caseNo} (${defendant}) สำเร็จแล้ว!`);
+      showToast(`✅ บันทึกข้อมูลลูกหนี้ (${defendant}) ลงคลังเรียบร้อยแล้ว!`);
       await updateSavedCasesBadge();
       await renderSavedCasesTable();
     } catch (err) {
@@ -1142,8 +1153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let cases = [];
     try {
-      const res  = await fetch(API);
-      const json = await res.json();
+      const json = await fetchJson(API);
       cases = json.data || [];
     } catch {
       savedCasesTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--rose);">❌ เชื่อมต่อ Server ไม่ได้ กรุณาตรวจสอบว่า node server.js กำลังทำงาน</td></tr>`;
@@ -1219,8 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', async (e) => {
         const id = Number(e.currentTarget.getAttribute('data-id'));
         try {
-          const res  = await fetch(`${API}/${id}`);
-          const json = await res.json();
+          const json = await fetchJson(`${API}/${id}`);
           if (json.success) {
             applyImportedData(json.data);
             closeSavedCasesModal();
@@ -1237,8 +1246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = Number(e.currentTarget.getAttribute('data-id'));
         if (!confirm('คุณต้องการลบคดีนี้ออกจากฐานข้อมูลหรือไม่?')) return;
         try {
-          const res  = await fetch(`${API}/${id}`, { method: 'DELETE' });
-          const json = await res.json();
+          const json = await fetchJson(`${API}/${id}`, { method: 'DELETE' });
           if (!json.success) throw new Error(json.error);
           showToast('🗑️ ลบคดีเรียบร้อยแล้ว');
           await updateSavedCasesBadge();
