@@ -2222,35 +2222,115 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnExportJson) {
     btnExportJson.addEventListener('click', () => {
-      const data = {
-        caseBlackNo: document.getElementById('caseBlackNo')?.value,
-        caseRedNo: document.getElementById('caseRedNo')?.value,
-        plaintiffName: document.getElementById('plaintiffName')?.value,
-        defendantName: document.getElementById('defendantName')?.value,
-        principalAmount: document.getElementById('principalAmount')?.value,
-        defaultDate: document.getElementById('defaultDate')?.value,
-        filingDate: document.getElementById('filingDate')?.value,
-        judgmentDate: document.getElementById('judgmentDate')?.value,
-        calcTargetDate: document.getElementById('calcTargetDate')?.value,
-        courtFeeAwarded: document.getElementById('courtFeeAwarded')?.value || 0,
-        attorneyFeeAwarded: 0,
-        preLitigationDebt: document.getElementById('preLitigationDebt')?.value || 0,
-        rentalPenaltyFee: document.getElementById('rentalPenaltyFee')?.value || 0,
-        preLitigationNotes: document.getElementById('preLitigationNotes')?.value || '',
-        preLitigationDebtor: document.getElementById('preLitigationDebtorName')?.value || '',
-        preLitigationRate: document.getElementById('preLitigationInterestRate')?.value || 7.5,
-        interestStages,
-        partialPayments
-      };
+      const data = buildCasePayload();
       const jsonStr = JSON.stringify(data, null, 2);
       const blob = new Blob([jsonStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `court-interest-calc-${data.caseBlackNo || 'case'}.json`;
+      a.download = `court-interest-calc-${data.caseBlackNo || data.defendantName || 'case'}.json`;
       a.click();
       URL.revokeObjectURL(url);
+      showToast('📥 ดาวน์โหลดไฟล์สำรอง JSON เรียบร้อยแล้ว!');
     });
+  }
+
+  const btnExportCsv = document.getElementById('btnExportCsv');
+  if (btnExportCsv) {
+    btnExportCsv.addEventListener('click', exportCurrentCaseCsv);
+  }
+
+  function exportCurrentCaseCsv() {
+    const payload = buildCasePayload();
+    const headers = [
+      'หมายเลขคดีดำ', 'หมายเลขคดีแดง', 'ชื่อโจทก์', 'ชื่อจำเลย', 'ชื่อลูกหนี้ก่อนฟ้อง',
+      'ยอดหนี้ก่อนส่งฟ้อง', 'อัตราดอกเบี้ยก่อนฟ้อง', 'รูปแบบค่าปรับ', 'ค่าปรับสัญญาเช่า', 'เงินประกันสัญญา',
+      'เงินต้นฟ้อง', 'วันผิดนัดชำระ', 'วันเสนอเรื่อง/วันฟ้องคดี', 'วันอ่านคำพิพากษา',
+      'ค่าธรรมเนียมศาลและค่าทนายความ', 'หมายเหตุส่งฟ้อง'
+    ];
+
+    const row = [
+      `"${payload.caseBlackNo || ''}"`,
+      `"${payload.caseRedNo || ''}"`,
+      `"${payload.plaintiffName || ''}"`,
+      `"${payload.defendantName || ''}"`,
+      `"${payload.preLitigationDebtor || ''}"`,
+      payload.preLitigationDebt || 0,
+      payload.preLitigationRate || 1.5,
+      `"${payload.rentalPenaltyType || 'flat'}"`,
+      payload.rentalPenaltyFee || 0,
+      payload.securityDeposit || 0,
+      payload.principalAmount || 0,
+      `"${payload.defaultDate || ''}"`,
+      `"${payload.filingDate || ''}"`,
+      `"${payload.judgmentDate || ''}"`,
+      payload.courtFeeAwarded || 0,
+      `"${(payload.preLitigationNotes || '').replace(/"/g, '""')}"`
+    ];
+
+    const csvContent = '\uFEFF' + headers.join(',') + '\n' + row.join(',');
+    const filename = `Case_Backup_${payload.caseBlackNo || payload.defendantName || 'debtor'}.csv`;
+    downloadFile(csvContent, filename, 'text/csv;charset=utf-8;');
+    showToast('📥 ดาวน์โหลดไฟล์สำรอง CSV เรียบร้อยแล้ว!');
+  }
+
+  const btnExportAllSavedCasesCsv = document.getElementById('btnExportAllSavedCasesCsv');
+  if (btnExportAllSavedCasesCsv) {
+    btnExportAllSavedCasesCsv.addEventListener('click', exportAllSavedCasesCsv);
+  }
+
+  async function exportAllSavedCasesCsv() {
+    let cases = [];
+    try {
+      const res = await fetchJson(API);
+      if (res && res.success && Array.isArray(res.data)) {
+        cases = res.data;
+      }
+    } catch (e) {
+      console.warn('[Fetch Server Cases Failed for CSV Backup -> Fallback to Local Storage]', e);
+    }
+    const localCases = getLocalCases();
+    localCases.forEach(lc => {
+      if (!cases.some(c => c.id === lc.id)) cases.unshift(lc);
+    });
+
+    if (cases.length === 0) {
+      alert('ไม่พบข้อมูลรายการคดีในคลังสำหรับส่งออก CSV');
+      return;
+    }
+
+    const headers = [
+      'ID', 'หมวดหมู่', 'หมายเลขคดีดำ', 'หมายเลขคดีแดง', 'ชื่อโจทก์', 'ชื่อจำเลย/ลูกหนี้',
+      'ยอดหนี้ก่อนส่งฟ้อง', 'อัตราดอกเบี้ยก่อนฟ้อง', 'รูปแบบค่าปรับ', 'ค่าปรับสัญญาเช่า', 'เงินประกันสัญญา',
+      'เงินต้นฟ้อง', 'วันผิดนัดชำระ', 'วันเสนอเรื่อง/วันฟ้องคดี', 'วันอ่านคำพิพากษา',
+      'ค่าธรรมเนียมศาลและทนาย', 'หมายเหตุส่งฟ้อง', 'วันที่บันทึก'
+    ];
+
+    const rows = cases.map(c => [
+      c.id || '',
+      `"${c.category === 'court' ? 'ลูกหนี้คดี' : 'ลูกหนี้ก่อนฟ้อง'}"`,
+      `"${c.caseBlackNo || ''}"`,
+      `"${c.caseRedNo || ''}"`,
+      `"${c.plaintiffName || ''}"`,
+      `"${c.preLitigationDebtor || c.defendantName || ''}"`,
+      c.preLitigationDebt || 0,
+      c.preLitigationRate !== undefined ? c.preLitigationRate : 1.5,
+      `"${c.rentalPenaltyType || 'flat'}"`,
+      c.rentalPenaltyFee || 0,
+      c.securityDeposit || 0,
+      c.principalAmount || 0,
+      `"${c.defaultDate || ''}"`,
+      `"${c.filingDate || ''}"`,
+      `"${c.judgmentDate || ''}"`,
+      c.courtFeeAwarded || 0,
+      `"${(c.preLitigationNotes || '').replace(/"/g, '""')}"`,
+      `"${c.savedAt || c.saved_at || ''}"`
+    ].join(','));
+
+    const csvContent = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n');
+    const filename = `All_Saved_Cases_Backup_${new Date().toISOString().slice(0, 10)}.csv`;
+    downloadFile(csvContent, filename, 'text/csv;charset=utf-8;');
+    showToast(`📥 ส่งออกไฟล์สำรองคลังคดีทั้งหมด (${cases.length} รายการ) เป็น CSV เรียบร้อยแล้ว!`);
   }
 
   if (btnAddInterestStage) {

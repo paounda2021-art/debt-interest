@@ -43,8 +43,11 @@
       <button type="button" class="btn btn-secondary" id="btnOpenImportModal" title="นำเข้าไฟล์ CSV / JSON">
         <i data-lucide="upload-cloud"></i> นำเข้า
       </button>
-      <button type="button" class="btn btn-secondary" id="btnExportJson" title="ดาวน์โหลดไฟล์สำรอง">
-        <i data-lucide="download"></i> สำรอง
+      <button type="button" class="btn btn-secondary" id="btnExportJson" title="สำรองไฟล์ JSON">
+        <i data-lucide="download"></i> สำรอง JSON
+      </button>
+      <button type="button" class="btn btn-secondary" id="btnExportCsv" title="สำรองไฟล์ CSV">
+        <i data-lucide="file-spreadsheet"></i> สำรอง CSV
       </button>
       <button type="button" class="btn btn-primary" id="btnPrintReport" style="background:linear-gradient(135deg,var(--gold),#a57419);color:#fff;" title="พิมพ์รายงาน / บันทึก PDF">
         <i data-lucide="printer"></i> พิมพ์/PDF
@@ -559,9 +562,14 @@
             <button type="button" class="btn btn-secondary btn-filter-case" data-filter="prelit" id="btnFilterCasePreLit" style="font-size: 0.82rem; padding: 5px 12px; font-weight: 600;">⚖️ ลูกหนี้ก่อนฟ้อง</button>
             <button type="button" class="btn btn-secondary btn-filter-case" data-filter="court" id="btnFilterCaseCourt" style="font-size: 0.82rem; padding: 5px 12px; font-weight: 600;">🏛️ ลูกหนี้คดี</button>
           </div>
-          <button type="button" class="btn btn-primary" id="btnModalSaveCurrentCase" style="background: linear-gradient(135deg, #10b981, #047857); color: #fff;">
-            <i data-lucide="plus"></i> บันทึกคดีปัจจุบันลงคลัง
-          </button>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary" id="btnExportAllSavedCasesCsv" style="font-size: 0.82rem; font-weight: 600;" title="ส่งออกข้อมูลคดีทั้งหมดในคลังเป็นไฟล์ CSV">
+              <i data-lucide="file-spreadsheet"></i> สำรองคลังคดีทั้งหมด (CSV)
+            </button>
+            <button type="button" class="btn btn-primary" id="btnModalSaveCurrentCase" style="background: linear-gradient(135deg, #10b981, #047857); color: #fff;">
+              <i data-lucide="plus"></i> บันทึกคดีปัจจุบันลงคลัง
+            </button>
+          </div>
         </div>
 
         <!-- Search Input Bar -->
