@@ -21,45 +21,42 @@ app.use(express.json({ limit: '2mb' }));
 // ─── Serve static frontend files ──────────────────────────────────
 app.use(express.static(path.join(__dirname)));
 
-// ─── REST API: /api/cases ─────────────────────────────────────────
+// ─── REST API Router: /api/cases (supports subpaths and trailing slashes) ───
+const apiRouter = express.Router();
 
-/** GET /api/cases — รายการคดีทั้งหมด */
-app.get('/api/cases', (req, res) => {
+apiRouter.get(['/cases', '/cases/'], (req, res) => {
   try {
     const cases = db.getAllCases();
     res.json({ success: true, data: cases, count: cases.length });
   } catch (err) {
-    console.error('[GET /api/cases]', err.message);
+    console.error('[GET /cases]', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-/** GET /api/cases/:id — คดีรายเดียว */
-app.get('/api/cases/:id', (req, res) => {
+apiRouter.get(['/cases/:id', '/cases/:id/'], (req, res) => {
   try {
     const caseData = db.getCaseById(Number(req.params.id));
     if (!caseData) return res.status(404).json({ success: false, error: 'ไม่พบคดีนี้ในระบบ' });
     res.json({ success: true, data: caseData });
   } catch (err) {
-    console.error('[GET /api/cases/:id]', err.message);
+    console.error('[GET /cases/:id]', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-/** POST /api/cases — สร้างคดีใหม่ */
-app.post('/api/cases', (req, res) => {
+apiRouter.post(['/cases', '/cases/'], (req, res) => {
   try {
     const newCase = db.insertCase(req.body);
-    console.log(`[DB] บันทึกคดีใหม่ id=${newCase.id} จำเลย="${newCase.defendant_name}"`);
+    console.log(`[DB] บันทึกคดีใหม่ id=${newCase.id} จำเลย="${newCase.defendant_name || newCase.pre_litigation_debtor}"`);
     res.status(201).json({ success: true, data: newCase });
   } catch (err) {
-    console.error('[POST /api/cases]', err.message);
+    console.error('[POST /cases]', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-/** PUT /api/cases/:id — อัปเดตคดี */
-app.put('/api/cases/:id', (req, res) => {
+apiRouter.put(['/cases/:id', '/cases/:id/'], (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!db.getCaseById(id)) return res.status(404).json({ success: false, error: 'ไม่พบคดีนี้ในระบบ' });
@@ -67,13 +64,12 @@ app.put('/api/cases/:id', (req, res) => {
     console.log(`[DB] อัปเดตคดี id=${id}`);
     res.json({ success: true, data: updated });
   } catch (err) {
-    console.error('[PUT /api/cases/:id]', err.message);
+    console.error('[PUT /cases/:id]', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-/** DELETE /api/cases/:id — ลบคดี */
-app.delete('/api/cases/:id', (req, res) => {
+apiRouter.delete(['/cases/:id', '/cases/:id/'], (req, res) => {
   try {
     const id = Number(req.params.id);
     const deleted = db.deleteCase(id);
@@ -81,10 +77,14 @@ app.delete('/api/cases/:id', (req, res) => {
     console.log(`[DB] ลบคดี id=${id}`);
     res.json({ success: true, message: `ลบคดี id=${id} เรียบร้อยแล้ว` });
   } catch (err) {
-    console.error('[DELETE /api/cases/:id]', err.message);
+    console.error('[DELETE /cases/:id]', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// Mount Router to support root /api and subpaths like /debt-interest/api
+app.use('/api', apiRouter);
+app.use('*/api', apiRouter);
 
 // ─── SPA Fallback & API 404 / Error Handlers ───────────────────────
 app.use((err, req, res, next) => {
