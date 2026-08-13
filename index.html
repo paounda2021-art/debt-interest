@@ -94,15 +94,15 @@
               <input type="text" id="preLitigationDebtorName" class="form-control" placeholder="เช่น นายสมคิด มั่งมี / บริษัท ผู้เช่า จำกัด">
             </div>
             <div class="form-group">
-              <label class="form-label">ค่าปรับตามสัญญา (% ต่อเดือน)</label>
-              <input type="number" id="preLitigationInterestRate" class="form-control" placeholder="เช่น 1.5 หรือ 7.5" value="1.5" step="any" min="0">
+              <label class="form-label">ยอดหนี้ก่อนส่งฟ้อง (บาท)</label>
+              <input type="text" inputmode="decimal" id="preLitigationDebt" class="form-control" placeholder="เช่น 120,000.00">
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">ยอดหนี้ก่อนส่งฟ้อง (บาท)</label>
-              <input type="text" inputmode="decimal" id="preLitigationDebt" class="form-control" placeholder="เช่น 120,000.00">
+              <label class="form-label">ค่าปรับตามสัญญา (% ต่อเดือน)</label>
+              <input type="number" id="preLitigationInterestRate" class="form-control" placeholder="เช่น 1.5 หรือ 7.5" value="1.5" step="any" min="0">
             </div>
             <div class="form-group">
               <label class="form-label">รูปแบบคิดค่าปรับสัญญาเช่า</label>
@@ -116,12 +116,12 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" id="lblRentalPenaltyFee">เงินประกันสัญญา (บาท)</label>
-              <input type="text" inputmode="decimal" id="rentalPenaltyFee" class="form-control" placeholder="เช่น 15,000.00">
+              <label class="form-label" id="lblRentalPenaltyFee">จำนวนเงินรายวัน/เหมาจ่าย (บาท)</label>
+              <input type="text" inputmode="decimal" id="rentalPenaltyFee" class="form-control" placeholder="เช่น 500.00 (เหมาจ่ายต่อวัน)">
             </div>
             <div class="form-group">
-              <label class="form-label">หมายเหตุ / รายละเอียดสัญญาเช่า</label>
-              <input type="text" id="preLitigationNotes" class="form-control" placeholder="เช่น ค่าเช่าค้างชำระ ม.ค.-เม.ย. + ค่าปรับผิดนัดตามสัญญาเช่าข้อ 5">
+              <label class="form-label" id="lblSecurityDeposit">เงินประกันสัญญา (บาท)</label>
+              <input type="text" inputmode="decimal" id="securityDeposit" class="form-control" placeholder="เช่น 15,000.00">
             </div>
           </div>
 
@@ -133,6 +133,13 @@
             <div class="form-group">
               <label class="form-label">วันเสนอเรื่องส่งฟ้อง *</label>
               <input type="date" id="preLitFilingDate" class="form-control" value="2021-01-01">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label">หมายเหตุ / รายละเอียดสัญญาเช่า</label>
+              <input type="text" id="preLitigationNotes" class="form-control" placeholder="เช่น ค่าเช่าค้างชำระ ม.ค.-เม.ย. + ค่าปรับผิดนัดตามสัญญาเช่าข้อ 5">
             </div>
           </div>
         </div>
@@ -631,12 +638,12 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label" id="lblNewRentalPenaltyFee">เงินประกันสัญญา (บาท)</label>
-                <input type="text" inputmode="decimal" id="newRentalPenaltyFee" class="form-control" placeholder="เช่น 15,000.00 หรือ 500.00">
+                <label class="form-label" id="lblNewRentalPenaltyFee">จำนวนเงินรายวัน/เหมาจ่าย (บาท)</label>
+                <input type="text" inputmode="decimal" id="newRentalPenaltyFee" class="form-control" placeholder="เช่น 500.00 (เหมาจ่ายต่อวัน)">
               </div>
               <div class="form-group">
-                <label class="form-label">หมายเหตุส่งฟ้อง</label>
-                <input type="text" id="newPreLitigationNotes" class="form-control" placeholder="เช่น ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดรายวันตามสัญญาข้อ 5">
+                <label class="form-label" id="lblNewSecurityDeposit">เงินประกันสัญญา (บาท)</label>
+                <input type="text" inputmode="decimal" id="newSecurityDeposit" class="form-control" placeholder="เช่น 15,000.00">
               </div>
             </div>
 
@@ -648,6 +655,13 @@
               <div class="form-group">
                 <label class="form-label">วันเสนอเรื่องส่งฟ้อง *</label>
                 <input type="date" id="newFilingDate" class="form-control" value="2021-01-01">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="grid-column: span 2;">
+                <label class="form-label">หมายเหตุส่งฟ้อง</label>
+                <input type="text" id="newPreLitigationNotes" class="form-control" placeholder="เช่น ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดรายวันตามสัญญาข้อ 5">
               </div>
             </div>
           </div>
@@ -755,6 +769,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260813_112"></script>
+  <script src="app.js?v=20260813_113"></script>
 </body>
 </html>

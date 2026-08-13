@@ -260,7 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 1. Inputs
     const preDebt = parseFormattedNumber(document.getElementById('preLitigationDebt')?.value) || parseFormattedNumber(document.getElementById('principalAmount')?.value) || 0;
-    const securityDeposit = parseFormattedNumber(document.getElementById('rentalPenaltyFee')?.value) || 0; // เงินประกันสัญญา
+    const securityDeposit = parseFormattedNumber(document.getElementById('securityDeposit')?.value) || 0; // เงินประกันสัญญา
+    const rentalPenaltyFee = parseFormattedNumber(document.getElementById('rentalPenaltyFee')?.value) || 0; // จำนวนเงินรายวัน/เหมาจ่าย (บาท)
     const penaltyType = document.getElementById('rentalPenaltyType')?.value || 'flat';
     const contractPenaltyRateInput = parseFloat(document.getElementById('preLitigationInterestRate')?.value);
     const contractPenaltyRate = !isNaN(contractPenaltyRateInput) ? contractPenaltyRateInput : 0;
@@ -289,13 +290,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const thPreLitCalcBadge = document.getElementById('thPreLitCalcBadge');
     if (thPreLitCalcBadge) {
-      thPreLitCalcBadge.innerText = preLitCalcMode === 'flat' ? '(เหมาจ่ายต่อวัน)' : (preLitCalcMode === 'daily' ? '(รายวัน)' : '(รายเดือน)');
+      thPreLitCalcBadge.innerText = penaltyType === 'flat' ? '(เหมาจ่ายต่อวัน)' : (penaltyType === 'daily' ? '(รายวัน)' : '(รายเดือน)');
     }
 
     if (noticeText) {
-      noticeText.innerHTML = preLitCalcMode === 'flat'
+      noticeText.innerHTML = penaltyType === 'flat'
         ? `📅 คำนวณผิดนัดจาก <strong>${formatDateThai(defaultDateStr)}</strong> ถึง <strong>${formatDateThai(filingDateStr)}</strong> (โหมดคำนวณเหมาจ่ายต่อวัน)`
-        : (preLitCalcMode === 'daily'
+        : (penaltyType === 'daily'
           ? `📅 คำนวณผิดนัดจาก <strong>${formatDateThai(defaultDateStr)}</strong> ถึง <strong>${formatDateThai(filingDateStr)}</strong> (โหมดคำนวณรายวัน)`
           : `📅 คำนวณผิดนัดจาก <strong>${formatDateThai(defaultDateStr)}</strong> ถึง <strong>${formatDateThai(filingDateStr)}</strong> (โหมดคำนวณรายเดือน)`);
     }
@@ -314,11 +315,27 @@ document.addEventListener('DOMContentLoaded', () => {
     let grossPenalty = 0;
     let penaltyLabelText = '';
 
-    if (contractPenaltyRate > 0) {
-      if (penaltyType === 'daily') {
+    if (penaltyType === 'flat') {
+      if (rentalPenaltyFee > 0) {
+        grossPenalty = rentalPenaltyFee * totalDays;
+        penaltyLabelText = `ค่าปรับเหมาจ่ายต่อวัน (${formatCurrency(rentalPenaltyFee)} ฿/วัน × ${totalDays} วัน)`;
+      } else if (contractPenaltyRate > 0) {
+        grossPenalty = preDebt * (contractPenaltyRate / 100) * totalMonths;
+        penaltyLabelText = `ค่าปรับตามสัญญา (${contractPenaltyRate}% ต่อเดือน × ${totalMonths} เดือน)`;
+      }
+    } else if (penaltyType === 'daily') {
+      if (rentalPenaltyFee > 0) {
+        grossPenalty = rentalPenaltyFee * totalDays;
+        penaltyLabelText = `ค่าปรับสัญญาเช่ารายวัน (${formatCurrency(rentalPenaltyFee)} ฿/วัน × ${totalDays} วัน)`;
+      } else if (contractPenaltyRate > 0) {
         grossPenalty = preDebt * (contractPenaltyRate / 100) * (totalDays / 30);
         penaltyLabelText = `ค่าปรับตามสัญญา (${contractPenaltyRate}% ต่อเดือน × ${totalDays} วัน)`;
-      } else {
+      }
+    } else if (penaltyType === 'monthly') {
+      if (rentalPenaltyFee > 0) {
+        grossPenalty = rentalPenaltyFee * totalMonths;
+        penaltyLabelText = `ค่าปรับสัญญาเช่ารายเดือน (${formatCurrency(rentalPenaltyFee)} ฿/เดือน × ${totalMonths} เดือน)`;
+      } else if (contractPenaltyRate > 0) {
         grossPenalty = preDebt * (contractPenaltyRate / 100) * totalMonths;
         penaltyLabelText = `ค่าปรับตามสัญญา (${contractPenaltyRate}% ต่อเดือน × ${totalMonths} เดือน)`;
       }
@@ -1163,6 +1180,7 @@ document.addEventListener('DOMContentLoaded', () => {
       attorneyFeeAwarded: 0,
       preLitigationDebt:  parseFormattedNumber(document.getElementById('preLitigationDebt')?.value) || 0,
       rentalPenaltyFee:   parseFormattedNumber(document.getElementById('rentalPenaltyFee')?.value) || 0,
+      securityDeposit:    parseFormattedNumber(document.getElementById('securityDeposit')?.value) || 0,
       preLitigationNotes: document.getElementById('preLitigationNotes')?.value || '',
       interestStages:     [...interestStages],
       partialPayments:    [...partialPayments]
@@ -1550,9 +1568,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Main Form
     const penaltyType = document.getElementById('rentalPenaltyType')?.value || 'flat';
     const rateInput = document.getElementById('preLitigationInterestRate');
-    const penaltyInput = document.getElementById('rentalPenaltyFee');
+    const feeInput = document.getElementById('rentalPenaltyFee');
+    const depositInput = document.getElementById('securityDeposit');
 
     if (penaltyType === 'flat') {
+      // Flat mode: feeInput is ENABLED, rateInput & depositInput are DISABLED (Gray)
+      if (feeInput) {
+        feeInput.disabled = false;
+        feeInput.readOnly = false;
+        feeInput.classList.remove('disabled-field');
+        feeInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
+      }
       if (rateInput) {
         rateInput.value = '0';
         rateInput.disabled = true;
@@ -1560,13 +1586,22 @@ document.addEventListener('DOMContentLoaded', () => {
         rateInput.classList.add('disabled-field');
         rateInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
       }
-      if (penaltyInput) {
-        penaltyInput.disabled = false;
-        penaltyInput.readOnly = false;
-        penaltyInput.classList.remove('disabled-field');
-        penaltyInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
+      if (depositInput) {
+        depositInput.value = '0.00';
+        depositInput.disabled = true;
+        depositInput.readOnly = true;
+        depositInput.classList.add('disabled-field');
+        depositInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
       }
     } else {
+      // Daily/Monthly mode: rateInput & depositInput are ENABLED (White), feeInput is DISABLED (Gray)
+      if (feeInput) {
+        feeInput.value = '0.00';
+        feeInput.disabled = true;
+        feeInput.readOnly = true;
+        feeInput.classList.add('disabled-field');
+        feeInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
+      }
       if (rateInput) {
         rateInput.disabled = false;
         rateInput.readOnly = false;
@@ -1576,21 +1611,27 @@ document.addEventListener('DOMContentLoaded', () => {
           rateInput.value = '1.5';
         }
       }
-      if (penaltyInput) {
-        penaltyInput.value = '0.00';
-        penaltyInput.disabled = true;
-        penaltyInput.readOnly = true;
-        penaltyInput.classList.add('disabled-field');
-        penaltyInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
+      if (depositInput) {
+        depositInput.disabled = false;
+        depositInput.readOnly = false;
+        depositInput.classList.remove('disabled-field');
+        depositInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
       }
     }
 
     // 2. Modal Form
     const newPenaltyType = document.getElementById('newRentalPenaltyType')?.value || 'flat';
     const newRateInput = document.getElementById('newPreLitigationRate');
-    const newPenaltyInput = document.getElementById('newRentalPenaltyFee');
+    const newFeeInput = document.getElementById('newRentalPenaltyFee');
+    const newDepositInput = document.getElementById('newSecurityDeposit');
 
     if (newPenaltyType === 'flat') {
+      if (newFeeInput) {
+        newFeeInput.disabled = false;
+        newFeeInput.readOnly = false;
+        newFeeInput.classList.remove('disabled-field');
+        newFeeInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
+      }
       if (newRateInput) {
         newRateInput.value = '0';
         newRateInput.disabled = true;
@@ -1598,13 +1639,21 @@ document.addEventListener('DOMContentLoaded', () => {
         newRateInput.classList.add('disabled-field');
         newRateInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
       }
-      if (newPenaltyInput) {
-        newPenaltyInput.disabled = false;
-        newPenaltyInput.readOnly = false;
-        newPenaltyInput.classList.remove('disabled-field');
-        newPenaltyInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
+      if (newDepositInput) {
+        newDepositInput.value = '0.00';
+        newDepositInput.disabled = true;
+        newDepositInput.readOnly = true;
+        newDepositInput.classList.add('disabled-field');
+        newDepositInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
       }
     } else {
+      if (newFeeInput) {
+        newFeeInput.value = '0.00';
+        newFeeInput.disabled = true;
+        newFeeInput.readOnly = true;
+        newFeeInput.classList.add('disabled-field');
+        newFeeInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
+      }
       if (newRateInput) {
         newRateInput.disabled = false;
         newRateInput.readOnly = false;
@@ -1614,12 +1663,11 @@ document.addEventListener('DOMContentLoaded', () => {
           newRateInput.value = '1.5';
         }
       }
-      if (newPenaltyInput) {
-        newPenaltyInput.value = '0.00';
-        newPenaltyInput.disabled = true;
-        newPenaltyInput.readOnly = true;
-        newPenaltyInput.classList.add('disabled-field');
-        newPenaltyInput.setAttribute('style', 'background-color: #e2e8f0 !important; color: #64748b !important; border-color: #cbd5e1 !important; cursor: not-allowed !important; pointer-events: none !important;');
+      if (newDepositInput) {
+        newDepositInput.disabled = false;
+        newDepositInput.readOnly = false;
+        newDepositInput.classList.remove('disabled-field');
+        newDepositInput.setAttribute('style', 'background-color: #ffffff !important; color: #0f172a !important; cursor: text !important; pointer-events: auto !important;');
       }
     }
   }
