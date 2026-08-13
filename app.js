@@ -11,14 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const interestStagesContainer = document.getElementById('interestStagesContainer');
   const paymentsContainer = document.getElementById('paymentsContainer');
   const presetButtons = document.querySelectorAll('.preset-btn');
-  const btnThemeToggle = document.getElementById('btnThemeToggle');
   const btnPrintReport = document.getElementById('btnPrintReport');
   const btnExportJson = document.getElementById('btnExportJson');
-  const btnSampleCase1 = document.getElementById('btnSampleCase1');
-  const btnSampleCase2 = document.getElementById('btnSampleCase2');
 
   // 2. Initial State
   let currentPreset = 'legal2021';
+  let preLitCalcMode = 'daily';
   let interestStages = [];
   let partialPayments = [];
 
@@ -71,6 +69,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function formatCurrency(val) {
     return (val || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ฿';
+  }
+
+  function formatNumberWithCommas(val) {
+    if (val === null || val === undefined || val === '') return '';
+    const num = parseFloat(String(val).replace(/,/g, ''));
+    if (isNaN(num)) return '';
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function parseFormattedNumber(val) {
+    if (val === null || val === undefined || val === '') return 0;
+    const num = parseFloat(String(val).replace(/,/g, ''));
+    return isNaN(num) ? 0 : num;
   }
 
   function getActiveRateForDate(dateStr, stages) {
@@ -133,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="form-group" style="margin-top:8px; margin-bottom:0;">
           <label class="form-label">อัตราดอกเบี้ย (% ต่อปี)</label>
-          <input type="number" step="0.01" class="form-control stage-rate" data-idx="${idx}" value="${stage.rate}">
+          <input type="number" step="any" class="form-control stage-rate" data-idx="${idx}" value="${stage.rate}">
         </div>
       `;
       interestStagesContainer.appendChild(item);
@@ -156,10 +167,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     interestStagesContainer.querySelectorAll('.stage-rate').forEach(inp => {
-      inp.addEventListener('change', (e) => {
-        const idx = e.target.getAttribute('data-idx');
-        interestStages[idx].rate = parseFloat(e.target.value) || 0;
-        calculateAndRender();
+      ['change', 'input'].forEach(evt => {
+        inp.addEventListener(evt, (e) => {
+          const idx = e.target.getAttribute('data-idx');
+          interestStages[idx].rate = parseFloat(e.target.value) || 0;
+          calculateAndRender();
+        });
       });
     });
 
@@ -192,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="form-group" style="margin-bottom:0;">
             <label class="form-label">จำนวนเงินที่ชำระ (บาท)</label>
-            <input type="number" step="100" class="form-control pmt-amount" data-idx="${idx}" value="${pmt.amount}">
+            <input type="number" step="any" class="form-control pmt-amount" data-idx="${idx}" value="${pmt.amount}">
           </div>
         </div>
       `;
@@ -208,10 +221,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     paymentsContainer.querySelectorAll('.pmt-amount').forEach(inp => {
-      inp.addEventListener('change', (e) => {
-        const idx = e.target.getAttribute('data-idx');
-        partialPayments[idx].amount = parseFloat(e.target.value) || 0;
-        calculateAndRender();
+      ['change', 'input'].forEach(evt => {
+        inp.addEventListener(evt, (e) => {
+          const idx = e.target.getAttribute('data-idx');
+          partialPayments[idx].amount = parseFloat(e.target.value) || 0;
+          calculateAndRender();
+        });
       });
     });
 
@@ -237,6 +252,207 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('summaryTotalFees').innerText = formatCurrency(totalFees);
     document.getElementById('summaryPaidSub').innerText = `ชำระแล้วสะสม ${formatCurrency(totalPaid)}`;
+  }
+
+  function renderPreLitigationLedger() {
+    const tbody = document.getElementById('preLitigationTableBody');
+    const noticeText = document.getElementById('preLitCalcNoticeText');
+    
+    const preDebt = parseFormattedNumber(document.getElementById('preLitigationDebt')?.value) || parseFormattedNumber(document.getElementById('principalAmount')?.value) || 0;
+    const rawPenaltyVal = parseFormattedNumber(document.getElementById('rentalPenaltyFee')?.value) || 0;
+    const penaltyType = document.getElementById('rentalPenaltyType')?.value || 'flat';
+    const defaultDateStr = document.getElementById('preLitDefaultDate')?.value || document.getElementById('defaultDate')?.value || '2020-01-01';
+    
+    let filingDateStr = document.getElementById('preLitFilingDate')?.value || document.getElementById('filingDate')?.value;
+    const calcTargetStr = document.getElementById('calcTargetDate')?.value || todayStr;
+
+    // Fallback filing date if empty or before default date
+    let dStart = parseDateLocal(defaultDateStr);
+    let dEnd = parseDateLocal(filingDateStr);
+
+    if (!dEnd || (dStart && dEnd <= dStart)) {
+      filingDateStr = calcTargetStr;
+      dEnd = parseDateLocal(filingDateStr);
+    }
+
+    if (!dStart || !dEnd || dStart >= dEnd) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">โปรดระบุวันผิดนัดชำระและวันฟ้องคดี/วันคำนวณเพื่อแสดงตารางก่อนส่งฟ้อง</td></tr>`;
+      return { preDebt, effectivePenalty: rawPenaltyVal, totalAccruedInterest: 0, grandTotal: preDebt + rawPenaltyVal };
+    }
+
+    const thPreLitCalcBadge = document.getElementById('thPreLitCalcBadge');
+    if (thPreLitCalcBadge) {
+      thPreLitCalcBadge.innerText = preLitCalcMode === 'daily' ? '(รายวัน)' : '(รายเดือน)';
+    }
+
+    if (noticeText) {
+      noticeText.innerHTML = preLitCalcMode === 'daily'
+        ? `📅 คำนวณผิดนัดจาก <strong>${formatDateThai(defaultDateStr)}</strong> ถึง <strong>${formatDateThai(filingDateStr)}</strong> (โหมดคำนวณรายวัน)`
+        : `📅 คำนวณผิดนัดจาก <strong>${formatDateThai(defaultDateStr)}</strong> ถึง <strong>${formatDateThai(filingDateStr)}</strong> (โหมดคำนวณรายเดือน)`;
+    }
+
+    let rowsHtml = '';
+    let totalAccruedInterest = 0;
+    const stages = interestStages.length > 0 ? interestStages : [{ startDate: defaultDateStr, rate: 5.0 }];
+
+    const customRateInput = parseFloat(document.getElementById('preLitigationInterestRate')?.value);
+    const customRate = !isNaN(customRateInput) ? customRateInput : null;
+
+    if (preLitCalcMode === 'daily') {
+      let checkpoints = new Set();
+      checkpoints.add(formatDateIso(dStart));
+      checkpoints.add(formatDateIso(dEnd));
+
+      stages.forEach(stg => {
+        if (stg.startDate) {
+          const s = parseDateLocal(stg.startDate);
+          if (s && s >= dStart && s <= dEnd) checkpoints.add(stg.startDate);
+        }
+        if (stg.endDate) {
+          const e = parseDateLocal(stg.endDate);
+          if (e && e >= dStart && e <= dEnd) {
+            const next = new Date(e.getFullYear(), e.getMonth(), e.getDate() + 1);
+            if (next <= dEnd) checkpoints.add(formatDateIso(next));
+          }
+        }
+      });
+
+      const sortedCheckpoints = Array.from(checkpoints).sort((a, b) => parseDateLocal(a) - parseDateLocal(b));
+
+      for (let i = 0; i < sortedCheckpoints.length - 1; i++) {
+        const pStartStr = sortedCheckpoints[i];
+        const pEndStr = sortedCheckpoints[i + 1];
+        const pStart = parseDateLocal(pStartStr);
+        const pEnd = parseDateLocal(pEndStr);
+
+        let days = Math.round((pEnd - pStart) / (1000 * 3600 * 24));
+        if (days <= 0) days = 1;
+
+        const rate = customRate !== null ? customRate : getActiveRateForDate(pStartStr, stages);
+        const interestInPeriod = preDebt * (rate / 100) * (days / 365);
+        totalAccruedInterest += interestInPeriod;
+
+        rowsHtml += `
+          <tr>
+            <td><strong>ช่วงที่ ${i + 1}</strong></td>
+            <td>${formatDateThai(pStartStr)} - ${formatDateThai(pEndStr)}</td>
+            <td>${days} วัน <span style="font-size:0.8rem; color:var(--primary-blue, #1d4ed8); font-weight:600;">(รายวัน)</span></td>
+            <td>${rate}% ต่อปี</td>
+            <td>${formatCurrency(preDebt)}</td>
+            <td style="color: var(--accent-amber);">${formatCurrency(interestInPeriod)} <span style="font-size:0.75rem; font-weight:600; color:var(--accent-amber);">(รายวัน)</span></td>
+            <td><strong>${formatCurrency(preDebt + totalAccruedInterest)}</strong></td>
+          </tr>
+        `;
+      }
+    } else {
+      const startYear = dStart.getFullYear();
+      const startMonth = dStart.getMonth();
+      const endYear = dEnd.getFullYear();
+      const endMonth = dEnd.getMonth();
+
+      let diffMonths = (endYear - startYear) * 12 + (endMonth - startMonth);
+      const startDay = dStart.getDate();
+      const endDay = dEnd.getDate();
+
+      let totalMonths = diffMonths;
+      if (endDay > startDay) {
+        totalMonths += Math.round(((endDay - startDay) / 30) * 100) / 100;
+      } else if (endDay < startDay) {
+        totalMonths -= 1;
+        totalMonths += Math.round(((30 - (startDay - endDay)) / 30) * 100) / 100;
+      }
+
+      if (totalMonths <= 0) totalMonths = 1;
+      totalMonths = Math.round(totalMonths * 100) / 100;
+
+      const rate = customRate !== null ? customRate : (stages[0]?.rate || 5.0);
+      const interestInPeriod = preDebt * (rate / 100) * (totalMonths / 12);
+      totalAccruedInterest = interestInPeriod;
+
+      rowsHtml += `
+        <tr>
+          <td><strong>คำนวณสรุปรายเดือน</strong></td>
+          <td>${formatDateThai(defaultDateStr)} - ${formatDateThai(filingDateStr)}</td>
+          <td>${totalMonths} เดือน <span style="font-size:0.8rem; color:var(--primary-blue, #1d4ed8); font-weight:600;">(รายเดือน)</span></td>
+          <td>${rate}% ต่อปี</td>
+          <td>${formatCurrency(preDebt)}</td>
+          <td style="color: var(--accent-amber);">${formatCurrency(interestInPeriod)} <span style="font-size:0.75rem; font-weight:600; color:var(--accent-amber);">(รายเดือน)</span></td>
+          <td><strong>${formatCurrency(preDebt + totalAccruedInterest)}</strong></td>
+        </tr>
+      `;
+    }
+
+    // Update Label for Penalty Input
+    const lblFee = document.getElementById('lblRentalPenaltyFee');
+    const inputFee = document.getElementById('rentalPenaltyFee');
+    if (lblFee && inputFee) {
+      if (penaltyType === 'daily') {
+        lblFee.innerText = 'อัตราค่าปรับรายวัน (บาท/วัน)';
+        if (!inputFee.value && inputFee.getAttribute('data-last-type') !== 'daily') {
+          inputFee.placeholder = 'เช่น 500 หรือ 100 บาท/วัน';
+        }
+      } else if (penaltyType === 'monthly') {
+        lblFee.innerText = 'อัตราค่าปรับรายเดือน (บาท/เดือน)';
+        if (!inputFee.value && inputFee.getAttribute('data-last-type') !== 'monthly') {
+          inputFee.placeholder = 'เช่น 2000 บาท/เดือน';
+        }
+      } else {
+        lblFee.innerText = 'จำนวนเงินค่าปรับ (เหมาจ่ายรวม - บาท)';
+        if (!inputFee.value && inputFee.getAttribute('data-last-type') !== 'flat') {
+          inputFee.placeholder = 'เช่น 15000.00 (เหมาจ่ายรวม)';
+        }
+      }
+      inputFee.setAttribute('data-last-type', penaltyType);
+    }
+
+    let totalDaysForPenalty = Math.round((dEnd - dStart) / (1000 * 3600 * 24));
+    if (totalDaysForPenalty <= 0) totalDaysForPenalty = 1;
+
+    let totalMonthsForPenalty = (dEnd.getFullYear() - dStart.getFullYear()) * 12 + (dEnd.getMonth() - dStart.getMonth());
+    if (dEnd.getDate() >= dStart.getDate()) {
+      totalMonthsForPenalty += Math.round(((dEnd.getDate() - dStart.getDate()) / 30) * 100) / 100;
+    }
+    if (totalMonthsForPenalty <= 0) totalMonthsForPenalty = 1;
+
+    let effectivePenalty = rawPenaltyVal;
+    let penaltyLabelText = 'ค่าปรับเฉพาะสัญญาเช่า (แบบเหมาจ่าย)';
+    if (penaltyType === 'daily') {
+      effectivePenalty = rawPenaltyVal * totalDaysForPenalty;
+      penaltyLabelText = `ค่าปรับผิดนัดรายวัน (${formatCurrency(rawPenaltyVal)} บาท/วัน × ${totalDaysForPenalty} วัน)`;
+    } else if (penaltyType === 'monthly') {
+      effectivePenalty = rawPenaltyVal * totalMonthsForPenalty;
+      penaltyLabelText = `ค่าปรับผิดนัดรายเดือน (${formatCurrency(rawPenaltyVal)} บาท/เดือน × ${totalMonthsForPenalty} เดือน)`;
+    }
+
+    if (effectivePenalty > 0) {
+      const penaltyModeLabel = penaltyType === 'daily' ? '(ค่าปรับรายวัน)' : (penaltyType === 'monthly' ? '(ค่าปรับรายเดือน)' : '(ค่าปรับเหมาจ่าย)');
+      rowsHtml += `
+        <tr class="payment-row">
+          <td><strong>ค่าปรับสัญญาเช่า</strong></td>
+          <td>${penaltyLabelText}</td>
+          <td>${penaltyType === 'daily' ? totalDaysForPenalty + ' วัน (รายวัน)' : (penaltyType === 'monthly' ? totalMonthsForPenalty + ' เดือน (รายเดือน)' : '- (เหมาจ่าย)')}</td>
+          <td>-</td>
+          <td>-</td>
+          <td style="color: var(--accent-rose); font-weight:600;">${formatCurrency(effectivePenalty)} <span style="font-size:0.75rem; font-weight:700; color:var(--accent-rose);">${penaltyModeLabel}</span></td>
+          <td><strong>${formatCurrency(preDebt + totalAccruedInterest + effectivePenalty)}</strong></td>
+        </tr>
+      `;
+    }
+
+    const grandTotal = preDebt + totalAccruedInterest + effectivePenalty;
+    const calcModeTag = preLitCalcMode === 'daily' ? '(รายวัน)' : '(รายเดือน)';
+    rowsHtml += `
+      <tr style="background: rgba(59, 130, 246, 0.08); font-weight: 700;">
+        <td colspan="4" style="text-align: right; color: var(--primary-blue);">รวมยอดหนี้และค่าปรับผิดนัดก่อนส่งฟ้องกฎหมาย:</td>
+        <td>${formatCurrency(preDebt)}</td>
+        <td style="color: var(--accent-rose);">${formatCurrency(totalAccruedInterest + effectivePenalty)} <span style="font-size:0.75rem; font-weight:600; color:var(--primary-blue);">${calcModeTag}</span></td>
+        <td style="color: var(--primary-gold); font-size: 1.05rem;">${formatCurrency(grandTotal)}</td>
+      </tr>
+    `;
+
+    if (tbody) tbody.innerHTML = rowsHtml;
+
+    return { preDebt, effectivePenalty, totalAccruedInterest, grandTotal };
   }
 
   function renderTable(rows) {
@@ -286,73 +502,6 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
-  // 5. Sample Datasets Loaders
-  function loadSampleCase1() {
-    currentPreset = 'custom';
-    document.getElementById('caseBlackNo').value = 'พ. 1024/2563';
-    document.getElementById('caseRedNo').value = 'พ. 2150/2563';
-    document.getElementById('plaintiffName').value = 'ธนาคารพัฒนาสินเชื่อ จำกัด (มหาชน)';
-    document.getElementById('defendantName').value = 'นายสมชาย ใจดี';
-    document.getElementById('principalAmount').value = 200000;
-    document.getElementById('defaultDate').value = '2020-01-01';
-    document.getElementById('filingDate').value = '2020-11-15';
-    document.getElementById('judgmentDate').value = '2021-03-15';
-    document.getElementById('courtFeeAwarded').value = 4000;
-    document.getElementById('attorneyFeeAwarded').value = 5000;
-
-    interestStages = [
-      { startDate: '2020-01-01', endDate: '2021-04-10', rate: 7.5, label: 'ดอกเบี้ยผิดนัดก่อน 11 เม.ย. 64 (7.5%)' },
-      { startDate: '2021-04-11', endDate: '', rate: 5.0, label: 'ดอกเบี้ยผิดนัดหลัง 11 เม.ย. 64 (5.0%)' }
-    ];
-
-    partialPayments = [
-      { date: '2021-07-01', amount: 15000, note: 'ผ่อนชำระงวดที่ 1' },
-      { date: '2022-01-10', amount: 30000, note: 'ผ่อนชำระงวดที่ 2' }
-    ];
-
-    renderInterestStages();
-    renderPayments();
-    calculateAndRender();
-
-    const results = document.querySelector('.results-dashboard');
-    if (results) {
-      results.scrollIntoView({ behavior: 'smooth' });
-    }
-  }
-
-  function loadSampleCase2() {
-    currentPreset = 'custom';
-    document.getElementById('caseBlackNo').value = 'ผบ. 512/2564';
-    document.getElementById('caseRedNo').value = 'ผบ. 980/2564';
-    document.getElementById('plaintiffName').value = 'บริษัท ไทยการค้าการเกษตร จำกัด';
-    document.getElementById('defendantName').value = 'นายวิชัย รุ่งเรือง';
-    document.getElementById('principalAmount').value = 500000;
-    document.getElementById('defaultDate').value = '2019-06-01';
-    document.getElementById('filingDate').value = '2020-12-01';
-    document.getElementById('judgmentDate').value = '2021-05-15';
-    document.getElementById('courtFeeAwarded').value = 10000;
-    document.getElementById('attorneyFeeAwarded').value = 8000;
-
-    interestStages = [
-      { startDate: '2019-06-01', endDate: '2020-12-01', rate: 15.0, label: 'อัตราตามสัญญาถึงวันฟ้อง (15%)' },
-      { startDate: '2020-12-02', endDate: '2021-04-10', rate: 7.5, label: 'ดอกเบี้ยผิดนัดเดิม (7.5%)' },
-      { startDate: '2021-04-11', endDate: '', rate: 5.0, label: 'ดอกเบี้ยผิดนัดใหม่ (5.0%)' }
-    ];
-
-    partialPayments = [
-      { date: '2022-04-15', amount: 100000, note: 'ผ่อนชำระงวดที่ 1' }
-    ];
-
-    renderInterestStages();
-    renderPayments();
-    calculateAndRender();
-
-    const results = document.querySelector('.results-dashboard');
-    if (results) {
-      results.scrollIntoView({ behavior: 'smooth' });
-    }
-  }
-
   // 6. Main Legal Interest Calculation Engine
   function calculateAndRender() {
     const principalInit = parseFloat(document.getElementById('principalAmount')?.value) || 0;
@@ -369,6 +518,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const printParties = document.getElementById('printParties');
     if (printCaseInfo) printCaseInfo.innerText = `คดีหมายเลขดำที่ ${caseBlackNo} / คดีหมายเลขแดงที่ ${caseRedNo}`;
     if (printParties) printParties.innerText = `โจทก์: ${plaintiffName} | จำเลย: ${defendantName}`;
+
+    // Render Pre-Litigation Calculation Ledger Table & Get Results
+    const preLitRes = renderPreLitigationLedger() || {};
+
+    const preDebtorName = document.getElementById('preLitigationDebtorName')?.value || document.getElementById('defendantName')?.value || '-';
+    const preNotes = document.getElementById('preLitigationNotes')?.value || '';
+
+    const displayPreDebtor = document.getElementById('displayPreLitigationDebtor');
+    const displayPreDebt = document.getElementById('displayPreLitigationDebt');
+    const displayRentPenalty = document.getElementById('displayRentalPenaltyFee');
+    const displayPreTotal = document.getElementById('displayPreLitigationTotal');
+    const displayPreNotes = document.getElementById('displayPreLitigationNotes');
+
+    if (displayPreDebtor) displayPreDebtor.innerText = `👤 ลูกหนี้ / ผู้เช่า: ${preDebtorName}`;
+    if (displayPreDebt) displayPreDebt.innerText = formatCurrency(preLitRes.preDebt || 0);
+    if (displayRentPenalty) displayRentPenalty.innerText = formatCurrency(preLitRes.effectivePenalty || 0);
+    if (displayPreTotal) displayPreTotal.innerText = formatCurrency(preLitRes.grandTotal || 0);
+    if (displayPreNotes) displayPreNotes.innerText = preNotes ? `หมายเหตุส่งฟ้อง: ${preNotes}` : '';
 
     if (!calcTargetDateStr || interestStages.length === 0) return;
 
@@ -649,17 +816,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (rows.length === 0) return null;
     const first = rows[0];
 
+    const isPrelit = first['category'] === 'prelit' || 
+                     first['ยอดหนี้ก่อนส่งฟ้อง'] !== undefined || 
+                     first['ยอดหนี้ก่อนฟ้อง'] !== undefined || 
+                     first['อัตราดอกเบี้ยก่อนฟ้อง'] !== undefined || 
+                     first['preLitigationDebt'] !== undefined || 
+                     (!first['หมายเลขคดีดำ'] && !first['caseBlackNo'] && !first['คดีดำ']);
+
     let debtorObj = {
+      category: isPrelit ? 'prelit' : 'court',
       caseBlackNo: first['หมายเลขคดีดำ'] || first['caseBlackNo'] || first['คดีดำ'] || '',
       caseRedNo: first['หมายเลขคดีแดง'] || first['caseRedNo'] || first['คดีแดง'] || '',
       plaintiffName: first['ชื่อโจทก์'] || first['plaintiffName'] || first['โจทก์'] || '',
       defendantName: first['ชื่อจำเลย'] || first['defendantName'] || first['จำเลย'] || '',
       principalAmount: parseFloat(first['เงินต้นฟ้อง'] || first['เงินต้น'] || first['principalAmount']) || 100000,
-      defaultDate: first['วันผิดนัด'] || first['defaultDate'] || '2020-01-01',
-      filingDate: first['วันฟ้อง'] || first['filingDate'] || '2021-01-01',
+      defaultDate: first['วันผิดนัดชำระ'] || first['วันผิดนัด'] || first['defaultDate'] || '2020-01-01',
+      filingDate: first['วันเสนอเรื่อง'] || first['วันฟ้องคดี'] || first['วันฟ้อง'] || first['filingDate'] || '2021-01-01',
       judgmentDate: first['วันพิพากษา'] || first['judgmentDate'] || '',
-      courtFeeAwarded: parseFloat(first['ค่าธรรมเนียมศาล'] || first['courtFeeAwarded']) || 0,
-      attorneyFeeAwarded: parseFloat(first['ค่าทนายความ'] || first['attorneyFeeAwarded']) || 0,
+      courtFeeAwarded: (parseFloat(first['ค่าธรรมเนียมศาลและค่าทนายความ'] || first['ค่าธรรมเนียมศาล'] || first['courtFeeAwarded']) || 0) + (parseFloat(first['ค่าทนายความ'] || first['attorneyFeeAwarded']) || 0),
+      attorneyFeeAwarded: 0,
+      preLitigationDebtorName: first['ชื่อลูกหนี้'] || first['ผู้เช่า'] || first['preLitigationDebtor'] || first['ชื่อจำเลย'] || '',
+      preLitigationDebt: parseFloat(first['ยอดหนี้ก่อนส่งฟ้อง'] || first['ยอดหนี้ก่อนฟ้อง'] || first['ยอดหนี้'] || first['preLitigationDebt']) || 0,
+      preLitigationInterestRate: parseFloat(first['อัตราดอกเบี้ยก่อนฟ้อง'] || first['preLitigationInterestRate']) || 1.5,
+      rentalPenaltyType: first['รูปแบบค่าปรับ'] || first['rentalPenaltyType'] || 'flat',
+      rentalPenaltyFee: parseFloat(first['ค่าปรับสัญญาเช่า'] || first['คิดค่าปรับ'] || first['ค่าปรับค่าเช่า'] || first['ค่าปรับ'] || first['rentalPenaltyFee']) || 0,
+      preLitigationNotes: first['หมายเหตุส่งฟ้อง'] || first['หมายเหตุสัญญาเช่า'] || first['preLitigationNotes'] || '',
       interestStages: [],
       partialPayments: []
     };
@@ -718,8 +899,42 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data.filingDate !== undefined) document.getElementById('filingDate').value = data.filingDate;
     if (data.judgmentDate !== undefined) document.getElementById('judgmentDate').value = data.judgmentDate;
     if (data.calcTargetDate !== undefined) document.getElementById('calcTargetDate').value = data.calcTargetDate;
-    if (data.courtFeeAwarded !== undefined) document.getElementById('courtFeeAwarded').value = data.courtFeeAwarded;
-    if (data.attorneyFeeAwarded !== undefined) document.getElementById('attorneyFeeAwarded').value = data.attorneyFeeAwarded;
+    const totalFeeInput = (data.courtFeeAwarded !== undefined ? parseFloat(data.courtFeeAwarded) || 0 : 0) + (data.attorneyFeeAwarded !== undefined ? parseFloat(data.attorneyFeeAwarded) || 0 : 0);
+    if (document.getElementById('courtFeeAwarded')) document.getElementById('courtFeeAwarded').value = totalFeeInput;
+
+    const debtorNameVal = data.preLitigationDebtorName || data.preLitigationDebtor || data.defendantName || '';
+    if (document.getElementById('preLitigationDebtorName')) document.getElementById('preLitigationDebtorName').value = debtorNameVal;
+    if (document.getElementById('defendantName')) document.getElementById('defendantName').value = debtorNameVal;
+
+    if (data.preLitigationDebt !== undefined && document.getElementById('preLitigationDebt')) {
+      document.getElementById('preLitigationDebt').value = formatNumberWithCommas(data.preLitigationDebt);
+    }
+    if (data.preLitigationInterestRate !== undefined && document.getElementById('preLitigationInterestRate')) {
+      document.getElementById('preLitigationInterestRate').value = data.preLitigationInterestRate;
+    }
+    if (data.rentalPenaltyType !== undefined && document.getElementById('rentalPenaltyType')) {
+      document.getElementById('rentalPenaltyType').value = data.rentalPenaltyType;
+    }
+    if (data.rentalPenaltyFee !== undefined && document.getElementById('rentalPenaltyFee')) {
+      document.getElementById('rentalPenaltyFee').value = formatNumberWithCommas(data.rentalPenaltyFee);
+    }
+    if (data.defaultDate) {
+      if (document.getElementById('defaultDate')) document.getElementById('defaultDate').value = data.defaultDate;
+      if (document.getElementById('preLitDefaultDate')) document.getElementById('preLitDefaultDate').value = data.defaultDate;
+    }
+    if (data.filingDate) {
+      if (document.getElementById('filingDate')) document.getElementById('filingDate').value = data.filingDate;
+      if (document.getElementById('preLitFilingDate')) document.getElementById('preLitFilingDate').value = data.filingDate;
+    }
+    if (data.preLitigationNotes !== undefined && document.getElementById('preLitigationNotes')) {
+      document.getElementById('preLitigationNotes').value = data.preLitigationNotes;
+    }
+    if (data.principalAmount !== undefined && document.getElementById('principalAmount')) {
+      document.getElementById('principalAmount').value = formatNumberWithCommas(data.principalAmount);
+    }
+    if (data.courtFeeAwarded !== undefined && document.getElementById('courtFeeAwarded')) {
+      document.getElementById('courtFeeAwarded').value = formatNumberWithCommas(data.courtFeeAwarded);
+    }
 
     if (Array.isArray(data.interestStages) && data.interestStages.length > 0) {
       interestStages = data.interestStages;
@@ -737,15 +952,46 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPayments();
     calculateAndRender();
 
-    const results = document.querySelector('.results-dashboard');
-    if (results) results.scrollIntoView({ behavior: 'smooth' });
+    // Auto-focus and highlight relevant section based on category
+    const isPrelit = (data.category || (data.caseBlackNo ? 'court' : 'prelit')) === 'prelit';
+    currentCaseCategory = isPrelit ? 'prelit' : 'court';
+
+    setTimeout(() => {
+      if (isPrelit) {
+        const targetElem = document.getElementById('preLitigationDebtorName') || document.querySelector('.pre-litigation-card');
+        if (targetElem) {
+          const cardBox = targetElem.closest('.card') || targetElem;
+          cardBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          cardBox.style.transition = 'all 0.4s ease';
+          cardBox.style.outline = '3px solid #2563eb';
+          cardBox.style.boxShadow = '0 0 20px rgba(37,99,235,0.45)';
+          setTimeout(() => {
+            cardBox.style.outline = '';
+            cardBox.style.boxShadow = '';
+          }, 2500);
+        }
+      } else {
+        const targetElem = document.getElementById('caseBlackNo') || document.getElementById('courtForm');
+        if (targetElem) {
+          const cardBox = targetElem.closest('.card') || targetElem;
+          cardBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          cardBox.style.transition = 'all 0.4s ease';
+          cardBox.style.outline = '3px solid #d97706';
+          cardBox.style.boxShadow = '0 0 20px rgba(217,119,6,0.45)';
+          setTimeout(() => {
+            cardBox.style.outline = '';
+            cardBox.style.boxShadow = '';
+          }, 2500);
+        }
+      }
+    }, 150);
   }
 
   if (btnDownloadCsvTemplate) {
     btnDownloadCsvTemplate.addEventListener('click', () => {
-      const csvContent = `หมายเลขคดีดำ,หมายเลขคดีแดง,ชื่อโจทก์,ชื่อจำเลย,เงินต้นฟ้อง,วันผิดนัด,วันฟ้อง,วันพิพากษา,ค่าธรรมเนียมศาล,ค่าทนายความ,วันที่ชำระเงิน,จำนวนเงินชำระ,หมายเหตุ
-พ. 101/2565,พ. 505/2565,ธนาคารไทยการเงิน จำกัด,นายสมคิด มั่งมี,250000,2020-01-01,2021-01-01,2021-06-01,5000,6000,2021-08-15,20000,ผ่อนชำระงวดที่ 1
-พ. 101/2565,พ. 505/2565,ธนาคารไทยการเงิน จำกัด,นายสมคิด มั่งมี,250000,2020-01-01,2021-01-01,2021-06-01,5000,6000,2022-02-10,35000,ผ่อนชำระงวดที่ 2`;
+      const csvContent = `หมายเลขคดีดำ,หมายเลขคดีแดง,ชื่อโจทก์,ชื่อจำเลย,ยอดหนี้ก่อนฟ้อง,คิดค่าปรับ,หมายเหตุส่งฟ้อง,เงินต้นฟ้อง,วันผิดนัด,วันฟ้อง,วันพิพากษา,ค่าธรรมเนียมศาลและค่าทนายความ,วันที่ชำระเงิน,จำนวนเงินชำระ,หมายเหตุ
+พ. 101/2565,พ. 505/2565,บริษัท พัฒนาอสังหา จำกัด,นายสมคิด มั่งมี,250000,15000,ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดตามสัญญาเช่า,250000,2020-01-01,2021-01-01,2021-06-01,11000,2021-08-15,20000,ผ่อนชำระงวดที่ 1
+พ. 101/2565,พ. 505/2565,บริษัท พัฒนาอสังหา จำกัด,นายสมคิด มั่งมี,250000,15000,ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดตามสัญญาเช่า,250000,2020-01-01,2021-01-01,2021-06-01,11000,2022-02-10,35000,ผ่อนชำระงวดที่ 2`;
       downloadFile(csvContent, 'Debtor_Import_Template.csv', 'text/csv;charset=utf-8;');
     });
   }
@@ -758,11 +1004,14 @@ document.addEventListener('DOMContentLoaded', () => {
         plaintiffName: "บริษัท เงินทุนหลักทรัพย์ จำกัด",
         defendantName: "นางสาวสมหญิง สุขใจ",
         principalAmount: 180000,
+        preLitigationDebt: 180000,
+        rentalPenaltyFee: 12000,
+        preLitigationNotes: "ค้างชำระค่าเช่าตามสัญญาเช่าพื้นที่",
         defaultDate: "2020-03-01",
         filingDate: "2021-02-01",
         judgmentDate: "2021-07-01",
-        courtFeeAwarded: 3500,
-        attorneyFeeAwarded: 4000,
+        courtFeeAwarded: 7500,
+        attorneyFeeAwarded: 0,
         interestStages: [
           { startDate: "2020-03-01", endDate: "2021-04-10", rate: 7.5, label: "อัตราเดิม 7.5%" },
           { startDate: "2021-04-11", endDate: "", rate: 5.0, label: "อัตราใหม่ 5.0%" }
@@ -834,18 +1083,31 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ─── Build current form data object ──────────────────────────────
+  let currentCaseCategory = 'prelit';
+
   function buildCasePayload() {
+    const preDebtor = document.getElementById('preLitigationDebtorName')?.value;
+    const defName = document.getElementById('defendantName')?.value;
+    const isCourtCase = !!(document.getElementById('caseBlackNo')?.value || document.getElementById('caseRedNo')?.value);
+    
     return {
+      category:           currentCaseCategory || (isCourtCase ? 'court' : 'prelit'),
       caseBlackNo:        document.getElementById('caseBlackNo')?.value || '',
       caseRedNo:          document.getElementById('caseRedNo')?.value   || '',
       plaintiffName:      document.getElementById('plaintiffName')?.value || '',
-      defendantName:      document.getElementById('defendantName')?.value || '',
+      defendantName:      defName || preDebtor || '',
+      preLitigationDebtor: preDebtor || defName || '',
+      preLitigationRate:  parseFloat(document.getElementById('preLitigationInterestRate')?.value) || 1.5,
+      rentalPenaltyType:  document.getElementById('rentalPenaltyType')?.value || 'flat',
       principalAmount:    parseFloat(document.getElementById('principalAmount')?.value) || 0,
       defaultDate:        document.getElementById('defaultDate')?.value  || '',
       filingDate:         document.getElementById('filingDate')?.value   || '',
       judgmentDate:       document.getElementById('judgmentDate')?.value || '',
       courtFeeAwarded:    parseFloat(document.getElementById('courtFeeAwarded')?.value) || 0,
-      attorneyFeeAwarded: parseFloat(document.getElementById('attorneyFeeAwarded')?.value) || 0,
+      attorneyFeeAwarded: 0,
+      preLitigationDebt:  parseFloat(document.getElementById('preLitigationDebt')?.value) || 0,
+      rentalPenaltyFee:   parseFloat(document.getElementById('rentalPenaltyFee')?.value) || 0,
+      preLitigationNotes: document.getElementById('preLitigationNotes')?.value || '',
       interestStages:     [...interestStages],
       partialPayments:    [...partialPayments]
     };
@@ -872,7 +1134,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ─── Render table ─────────────────────────────────────────────────
+  let currentSavedCasesFilter = 'all';
+
   async function renderSavedCasesTable() {
     if (!savedCasesTableBody) return;
     savedCasesTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text-muted);">⏳ กำลังโหลดข้อมูลจากฐานข้อมูล...</td></tr>`;
@@ -887,26 +1150,62 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const searchInput = document.getElementById('inputSearchSavedCases');
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+    if (currentSavedCasesFilter !== 'all') {
+      cases = cases.filter(c => (c.category || (c.caseBlackNo ? 'court' : 'prelit')) === currentSavedCasesFilter);
+    }
+
+    if (query) {
+      cases = cases.filter(c => {
+        const debtor = (c.preLitigationDebtor || c.defendantName || '').toLowerCase();
+        const plaintiff = (c.plaintiffName || '').toLowerCase();
+        const black = (c.caseBlackNo || '').toLowerCase();
+        const red = (c.caseRedNo || '').toLowerCase();
+        const notes = (c.preLitigationNotes || '').toLowerCase();
+
+        return debtor.includes(query) || plaintiff.includes(query) || black.includes(query) || red.includes(query) || notes.includes(query);
+      });
+    }
+
     if (cases.length === 0) {
-      savedCasesTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">ยังไม่มีรายการคดีที่บันทึกในฐานข้อมูล</td></tr>`;
+      const msg = query ? `ไม่พบข้อมูลลูกหนี้ที่ตรงกับคำค้นหา "${searchInput.value}"` : 'ไม่พบรายการลูกหนี้ในหมวดหมู่นี้';
+      savedCasesTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">${msg}</td></tr>`;
       return;
     }
 
     savedCasesTableBody.innerHTML = '';
     cases.forEach(c => {
+      const isPrelit = (c.category || (c.caseBlackNo ? 'court' : 'prelit')) === 'prelit';
+      const catBadge = isPrelit
+        ? `<span style="background: rgba(59,130,246,0.12); color: #1d4ed8; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">⚖️ ก่อนฟ้อง</span>`
+        : `<span style="background: rgba(217,119,6,0.12); color: #b45309; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">🏛️ ชั้นคดี</span>`;
+
+      const debtorDisplayName = c.preLitigationDebtor || c.defendantName || '-';
+      const principalVal = isPrelit ? (c.preLitigationDebt || c.principalAmount || 0) : (c.principalAmount || 0);
+      const totalVal = isPrelit
+        ? (c.preLitigationDebt || c.principalAmount || 0) + (c.rentalPenaltyFee || 0)
+        : (c.principalAmount || 0) + (c.courtFeeAwarded || 0);
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><strong>${c.caseBlackNo || '-'}</strong> / <span style="color:var(--gold);">${c.caseRedNo || '-'}</span></td>
         <td>
-          <div style="font-weight:600;">${c.plaintiffName || '-'}</div>
-          <div style="font-size:0.78rem;color:var(--text-muted);">จำเลย: ${c.defendantName || '-'}</div>
+          <div>${catBadge}</div>
+          <div style="font-weight: 600; font-size: 0.82rem; margin-top: 2px;">
+            ${c.caseBlackNo ? `ดำ ${c.caseBlackNo}` : '-'} ${c.caseRedNo ? `/ แดง ${c.caseRedNo}` : ''}
+          </div>
         </td>
-        <td>${formatCurrency(c.principalAmount)}</td>
-        <td style="color:var(--gold);font-weight:700;">${formatCurrency(c.principalAmount)}</td>
+        <td>
+          <div style="font-weight:700; color: #1e3a8a;">${debtorDisplayName}</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);">${c.plaintiffName ? 'เจ้าหนี้: ' + c.plaintiffName : (c.preLitigationNotes || 'ลูกหนี้ก่อนฟ้อง')}</div>
+        </td>
+        <td style="font-weight:600;">${formatCurrency(principalVal)}</td>
+        <td style="color:var(--gold);font-weight:700;">${formatCurrency(totalVal)}</td>
         <td style="font-size:0.8rem;">${formatDateThai(c.savedAt || c.saved_at)}</td>
         <td style="text-align:center;white-space:nowrap;">
-          <button type="button" class="btn btn-outline-gold load-saved-case" data-id="${c.id}" style="padding:3px 10px;font-size:0.8rem;">
-            <i data-lucide="folder-open"></i> โหลด
+          <button type="button" class="btn btn-outline-gold load-saved-case" data-id="${c.id}" style="padding:4px 10px;font-size:0.8rem;font-weight:600;" title="ดึงข้อมูลลูกหนี้รายนี้ขึ้นมาคำนวณและแสดงผลบนฟอร์ม">
+            <i data-lucide="folder-open"></i> โหลดเข้าฟอร์ม
           </button>
           <button type="button" class="btn-danger-sm delete-saved-case" data-id="${c.id}" style="margin-left:4px;">ลบ</button>
         </td>
@@ -951,8 +1250,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function openSavedCasesModal() {
+  function openSavedCasesModal(categoryFilter) {
     if (savedCasesModal) {
+      if (typeof categoryFilter === 'string') {
+        currentSavedCasesFilter = categoryFilter;
+        document.querySelectorAll('.btn-filter-case').forEach(b => {
+          if (b.getAttribute('data-filter') === categoryFilter) {
+            b.classList.add('active');
+          } else {
+            b.classList.remove('active');
+          }
+        });
+      }
       renderSavedCasesTable();
       savedCasesModal.style.setProperty('display', 'flex', 'important');
     }
@@ -964,7 +1273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (btnOpenSavedCasesModal)  btnOpenSavedCasesModal.addEventListener('click', openSavedCasesModal);
+  if (btnOpenSavedCasesModal)  btnOpenSavedCasesModal.addEventListener('click', () => openSavedCasesModal());
   if (btnCloseSavedCasesModal) btnCloseSavedCasesModal.addEventListener('click', closeSavedCasesModal);
   if (btnCloseSavedCases)      btnCloseSavedCases.addEventListener('click', closeSavedCasesModal);
   if (btnSaveCurrentCase)      btnSaveCurrentCase.addEventListener('click', saveCurrentCase);
@@ -972,22 +1281,211 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updateSavedCasesBadge();
 
-  // --- Add New Debtor Modal Handlers ---
+  // Auto-format money input fields with commas and 2 decimals on blur/input
+  const moneyInputIds = [
+    'preLitigationDebt', 'rentalPenaltyFee', 'principalAmount', 'courtFeeAwarded',
+    'newPreLitigationDebt', 'newRentalPenaltyFee', 'newPrincipalAmount'
+  ];
+
+  moneyInputIds.forEach(id => {
+    const input = document.getElementById(id);
+    if (!input) return;
+    input.addEventListener('blur', () => {
+      if (input.value !== '') {
+        input.value = formatNumberWithCommas(input.value);
+      }
+      calculateAndRender();
+    });
+    input.addEventListener('focus', () => {
+      if (input.value !== '') {
+        input.value = String(parseFormattedNumber(input.value));
+        input.select();
+      }
+    });
+    input.addEventListener('input', () => {
+      calculateAndRender();
+    });
+  });
+
+  // Sync date fields between Pre-Litigation Card and Court Case Card
+  const preLitDefaultDate = document.getElementById('preLitDefaultDate');
+  const preLitFilingDate = document.getElementById('preLitFilingDate');
+  const defaultDateInput = document.getElementById('defaultDate');
+  const filingDateInput = document.getElementById('filingDate');
+
+  if (preLitDefaultDate && defaultDateInput) {
+    preLitDefaultDate.addEventListener('change', () => {
+      defaultDateInput.value = preLitDefaultDate.value;
+      calculateAndRender();
+    });
+    defaultDateInput.addEventListener('change', () => {
+      preLitDefaultDate.value = defaultDateInput.value;
+      calculateAndRender();
+    });
+  }
+
+  if (preLitFilingDate && filingDateInput) {
+    preLitFilingDate.addEventListener('change', () => {
+      filingDateInput.value = preLitFilingDate.value;
+      calculateAndRender();
+    });
+    filingDateInput.addEventListener('change', () => {
+      preLitFilingDate.value = filingDateInput.value;
+      calculateAndRender();
+    });
+  }
+
+  // Clear form data handler
+  function clearAllFormData() {
+    if (document.getElementById('preLitigationDebtorName')) document.getElementById('preLitigationDebtorName').value = '';
+    if (document.getElementById('preLitigationDebt')) document.getElementById('preLitigationDebt').value = '';
+    if (document.getElementById('preLitigationInterestRate')) document.getElementById('preLitigationInterestRate').value = '1.5';
+    if (document.getElementById('rentalPenaltyType')) document.getElementById('rentalPenaltyType').value = 'flat';
+    if (document.getElementById('rentalPenaltyFee')) document.getElementById('rentalPenaltyFee').value = '';
+    if (document.getElementById('preLitigationNotes')) document.getElementById('preLitigationNotes').value = '';
+    if (document.getElementById('preLitDefaultDate')) document.getElementById('preLitDefaultDate').value = '2020-01-01';
+    if (document.getElementById('preLitFilingDate')) document.getElementById('preLitFilingDate').value = '2021-01-01';
+
+    if (document.getElementById('caseBlackNo')) document.getElementById('caseBlackNo').value = '';
+    if (document.getElementById('caseRedNo')) document.getElementById('caseRedNo').value = '';
+    if (document.getElementById('plaintiffName')) document.getElementById('plaintiffName').value = '';
+    if (document.getElementById('defendantName')) document.getElementById('defendantName').value = '';
+    if (document.getElementById('principalAmount')) document.getElementById('principalAmount').value = '';
+    if (document.getElementById('defaultDate')) document.getElementById('defaultDate').value = '2020-01-01';
+    if (document.getElementById('filingDate')) document.getElementById('filingDate').value = '2021-01-01';
+    if (document.getElementById('judgmentDate')) document.getElementById('judgmentDate').value = '2021-06-01';
+    if (document.getElementById('courtFeeAwarded')) document.getElementById('courtFeeAwarded').value = '';
+
+    partialPayments = [];
+    renderPayments();
+    applyPreset('legal2021');
+    calculateAndRender();
+
+    showToast('🧹 ล้างข้อมูลเรียบร้อยแล้ว');
+  }
+
+  const btnClearPreLitigationForm = document.getElementById('btnClearPreLitigationForm');
+  if (btnClearPreLitigationForm) {
+    btnClearPreLitigationForm.addEventListener('click', clearAllFormData);
+  }
+
+  // Rental penalty type select dropdown listener
+  const rentalPenaltyTypeSelect = document.getElementById('rentalPenaltyType');
+  if (rentalPenaltyTypeSelect) {
+    rentalPenaltyTypeSelect.addEventListener('change', () => {
+      const val = rentalPenaltyTypeSelect.value;
+      if (val === 'daily') {
+        preLitCalcMode = 'daily';
+        document.getElementById('btnPreLitCalcModeDaily')?.classList.add('active');
+        document.getElementById('btnPreLitCalcModeMonthly')?.classList.remove('active');
+      } else if (val === 'monthly') {
+        preLitCalcMode = 'monthly';
+        document.getElementById('btnPreLitCalcModeMonthly')?.classList.add('active');
+        document.getElementById('btnPreLitCalcModeDaily')?.classList.remove('active');
+      }
+      calculateAndRender();
+    });
+  }
+
+  // Saved Cases Search & Filter Handlers
+  const inputSearchSavedCases = document.getElementById('inputSearchSavedCases');
+  if (inputSearchSavedCases) {
+    inputSearchSavedCases.addEventListener('input', () => {
+      renderSavedCasesTable();
+    });
+  }
+
+  document.querySelectorAll('.btn-filter-case').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.btn-filter-case').forEach(b => b.classList.remove('active'));
+      e.currentTarget.classList.add('active');
+      currentSavedCasesFilter = e.currentTarget.getAttribute('data-filter') || 'all';
+      renderSavedCasesTable();
+    });
+  });
+
+  // --- Add New Debtor Modal Handlers & Category Switching ---
   const addDebtorModal = document.getElementById('addDebtorModal');
   const btnOpenAddDebtorModal = document.getElementById('btnOpenAddDebtorModal');
   const btnCloseAddDebtorModal = document.getElementById('btnCloseAddDebtorModal');
   const btnCancelAddDebtor = document.getElementById('btnCancelAddDebtor');
   const quickAddDebtorForm = document.getElementById('quickAddDebtorForm');
 
+  const catPreLitRadio = document.getElementById('catPreLit');
+  const catCourtRadio = document.getElementById('catCourt');
+  const lblCatPreLit = document.getElementById('lblCatPreLit');
+  const lblCatCourt = document.getElementById('lblCatCourt');
+  const rowCourtCaseNumbers = document.getElementById('rowCourtCaseNumbers');
+  const rowPreLitigationDetails = document.getElementById('rowPreLitigationDetails');
+  const lblNewDebtorName = document.getElementById('lblNewDebtorName');
+  const lblNewPrincipal = document.getElementById('lblNewPrincipal');
+  const lblNewFilingDate = document.getElementById('lblNewFilingDate');
+
+  const newRentalPenaltyType = document.getElementById('newRentalPenaltyType');
+  const lblNewRentalPenaltyFee = document.getElementById('lblNewRentalPenaltyFee');
+
+  if (newRentalPenaltyType && lblNewRentalPenaltyFee) {
+    newRentalPenaltyType.addEventListener('change', () => {
+      const val = newRentalPenaltyType.value;
+      if (val === 'daily') {
+        lblNewRentalPenaltyFee.innerText = 'อัตราค่าปรับสัญญาเช่ารายวัน (บาท/วัน)';
+      } else if (val === 'monthly') {
+        lblNewRentalPenaltyFee.innerText = 'อัตราค่าปรับสัญญาเช่ารายเดือน (บาท/เดือน)';
+      } else {
+        lblNewRentalPenaltyFee.innerText = 'จำนวนเงินค่าปรับสัญญาเช่า (เหมาจ่ายรวม - บาท)';
+      }
+    });
+  }
+
+  const secPreLitForm = document.getElementById('secPreLitForm');
+  const secCourtForm = document.getElementById('secCourtForm');
+  const btnSubmitAddDebtor = document.getElementById('btnSubmitAddDebtor');
+
+  function updateAddDebtorCategoryUI() {
+    if (catPreLitRadio && catPreLitRadio.checked) {
+      selectedAddCategory = 'prelit';
+      if (lblCatPreLit) {
+        lblCatPreLit.style.borderColor = '#1d4ed8';
+        lblCatPreLit.style.background = 'rgba(59,130,246,0.08)';
+      }
+      if (lblCatCourt) {
+        lblCatCourt.style.borderColor = '#cbd5e1';
+        lblCatCourt.style.background = '#fff';
+      }
+      if (secPreLitForm) secPreLitForm.style.display = 'block';
+      if (secCourtForm) secCourtForm.style.display = 'none';
+      if (btnSubmitAddDebtor) btnSubmitAddDebtor.innerHTML = '⚖️ บันทึกข้อมูลลูกหนี้ก่อนฟ้อง';
+    } else {
+      selectedAddCategory = 'court';
+      if (lblCatCourt) {
+        lblCatCourt.style.borderColor = '#1d4ed8';
+        lblCatCourt.style.background = 'rgba(59,130,246,0.08)';
+      }
+      if (lblCatPreLit) {
+        lblCatPreLit.style.borderColor = '#cbd5e1';
+        lblCatPreLit.style.background = '#fff';
+      }
+      if (secPreLitForm) secPreLitForm.style.display = 'none';
+      if (secCourtForm) secCourtForm.style.display = 'block';
+      if (btnSubmitAddDebtor) btnSubmitAddDebtor.innerHTML = '🏛️ บันทึกข้อมูลลูกหนี้คดี';
+    }
+  }
+
+  if (catPreLitRadio) catPreLitRadio.addEventListener('change', updateAddDebtorCategoryUI);
+  if (catCourtRadio) catCourtRadio.addEventListener('change', updateAddDebtorCategoryUI);
+
   function openAddDebtorModal() {
     if (addDebtorModal) {
+      addDebtorModal.classList.add('active');
       addDebtorModal.style.setProperty('display', 'flex', 'important');
+      updateAddDebtorCategoryUI();
       document.getElementById('newDebtorName')?.focus();
     }
   }
 
   function closeAddDebtorModal() {
     if (addDebtorModal) {
+      addDebtorModal.classList.remove('active');
       addDebtorModal.style.setProperty('display', 'none', 'important');
     }
   }
@@ -999,54 +1497,402 @@ document.addEventListener('DOMContentLoaded', () => {
   if (quickAddDebtorForm) {
     quickAddDebtorForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const debtorName = document.getElementById('newDebtorName')?.value || 'ลูกหนี้ใหม่';
-      const plaintiffName = document.getElementById('newPlaintiffName')?.value || '';
-      const caseBlackNo = document.getElementById('newCaseBlackNo')?.value || '';
-      const caseRedNo = document.getElementById('newCaseRedNo')?.value || '';
-      const principalAmt = parseFloat(document.getElementById('newPrincipalAmount')?.value) || 100000;
-      const defaultDate = document.getElementById('newDefaultDate')?.value || '2020-01-01';
-      const filingDate = document.getElementById('newFilingDate')?.value || '2021-01-01';
-      const preset = document.getElementById('newInterestPreset')?.value || 'legal2021';
+      currentCaseCategory = selectedAddCategory;
 
-      // Populate main form fields
-      document.getElementById('defendantName').value = debtorName;
-      if (plaintiffName) document.getElementById('plaintiffName').value = plaintiffName;
-      if (caseBlackNo) document.getElementById('caseBlackNo').value = caseBlackNo;
-      if (caseRedNo) document.getElementById('caseRedNo').value = caseRedNo;
-      document.getElementById('principalAmount').value = principalAmt;
-      document.getElementById('defaultDate').value = defaultDate;
-      document.getElementById('filingDate').value = filingDate;
+      if (selectedAddCategory === 'prelit') {
+        const debtorName = document.getElementById('newDebtorName')?.value || 'ลูกหนี้ก่อนฟ้อง';
+        const preLitDebt = parseFormattedNumber(document.getElementById('newPreLitigationDebt')?.value) || 0;
+        const preLitRate = parseFloat(document.getElementById('newPreLitigationRate')?.value) || 1.5;
+        const rentPenaltyType = document.getElementById('newRentalPenaltyType')?.value || 'flat';
+        const rentPenalty = parseFormattedNumber(document.getElementById('newRentalPenaltyFee')?.value) || 0;
+        const preLitNotes = document.getElementById('newPreLitigationNotes')?.value || '';
+        const defaultDate = document.getElementById('newDefaultDate')?.value || '2020-01-01';
+        const filingDate = document.getElementById('newFilingDate')?.value || '2021-01-01';
 
-      currentPreset = preset;
-      applyPreset(preset);
-      partialPayments = []; // Reset payments for new debtor
-      renderPayments();
-      calculateAndRender();
+        if (document.getElementById('preLitigationDebtorName')) document.getElementById('preLitigationDebtorName').value = debtorName;
+        if (document.getElementById('preLitigationDebt')) document.getElementById('preLitigationDebt').value = formatNumberWithCommas(preLitDebt);
+        if (document.getElementById('preLitigationInterestRate')) document.getElementById('preLitigationInterestRate').value = preLitRate;
+        if (document.getElementById('rentalPenaltyType')) document.getElementById('rentalPenaltyType').value = rentPenaltyType;
+        if (document.getElementById('rentalPenaltyFee')) document.getElementById('rentalPenaltyFee').value = formatNumberWithCommas(rentPenalty);
+        if (document.getElementById('preLitigationNotes')) document.getElementById('preLitigationNotes').value = preLitNotes;
+        document.getElementById('defaultDate').value = defaultDate;
+        document.getElementById('filingDate').value = filingDate;
+        document.getElementById('defendantName').value = debtorName;
+        document.getElementById('principalAmount').value = formatNumberWithCommas(preLitDebt);
 
-      // Automatically save new debtor into storage
-      saveCurrentCase();
+        applyPreset('legal2021');
+        calculateAndRender();
+        saveCurrentCase();
+        closeAddDebtorModal();
+        quickAddDebtorForm.reset();
+        showToast(`⚖️ บันทึกข้อมูลลูกหนี้ก่อนฟ้อง (${debtorName}) เรียบร้อยแล้ว`);
+      } else {
+        const debtorName = document.getElementById('newCourtDefendantName')?.value || 'จำเลย';
+        const plaintiffName = document.getElementById('newCourtPlaintiffName')?.value || '';
+        const caseBlackNo = document.getElementById('newCaseBlackNo')?.value || '';
+        const caseRedNo = document.getElementById('newCaseRedNo')?.value || '';
+        const principalAmt = parseFloat(document.getElementById('newPrincipalAmount')?.value) || 100000;
+        const defaultDate = document.getElementById('newCourtDefaultDate')?.value || '2020-01-01';
+        const filingDate = document.getElementById('newCourtFilingDate')?.value || '2021-01-01';
+        const preset = document.getElementById('newInterestPreset')?.value || 'legal2021';
 
-      closeAddDebtorModal();
-      quickAddDebtorForm.reset();
+        document.getElementById('defendantName').value = debtorName;
+        if (plaintiffName) document.getElementById('plaintiffName').value = plaintiffName;
+        if (caseBlackNo) document.getElementById('caseBlackNo').value = caseBlackNo;
+        if (caseRedNo) document.getElementById('caseRedNo').value = caseRedNo;
+        document.getElementById('principalAmount').value = principalAmt;
+        document.getElementById('defaultDate').value = defaultDate;
+        document.getElementById('filingDate').value = filingDate;
+
+        currentPreset = preset;
+        applyPreset(preset);
+        partialPayments = [];
+        renderPayments();
+        calculateAndRender();
+        saveCurrentCase();
+        closeAddDebtorModal();
+        quickAddDebtorForm.reset();
+        showToast(`🏛️ บันทึกข้อมูลลูกหนี้คดี (${debtorName}) เรียบร้อยแล้ว`);
+      }
+    });
+  }
+
+  // --- Pre-Litigation Debtor Import Modal Handlers ---
+  const preLitigationImportModal = document.getElementById('preLitigationImportModal');
+  const btnOpenPreLitigationImport = document.getElementById('btnOpenPreLitigationImport');
+  const btnClosePreLitigationImportModal = document.getElementById('btnClosePreLitigationImportModal');
+  const btnCancelPreLitImport = document.getElementById('btnCancelPreLitImport');
+  const btnChoosePreLitFile = document.getElementById('btnChoosePreLitFile');
+  const fileInputPreLitigation = document.getElementById('fileInputPreLitigation');
+  const btnDownloadPreLitCsvTemplate = document.getElementById('btnDownloadPreLitCsvTemplate');
+  const preLitImportPreviewContainer = document.getElementById('preLitImportPreviewContainer');
+  const selectPreLitImportedDebtor = document.getElementById('selectPreLitImportedDebtor');
+  const btnApplyPreLitSelectedDebtor = document.getElementById('btnApplyPreLitSelectedDebtor');
+
+  let preLitImportedDebtorsList = [];
+
+  function openPreLitImportModal() {
+    if (preLitigationImportModal) {
+      preLitigationImportModal.classList.add('active');
+      preLitigationImportModal.style.setProperty('display', 'flex', 'important');
+    }
+  }
+
+  function closePreLitImportModal() {
+    if (preLitigationImportModal) {
+      preLitigationImportModal.classList.remove('active');
+      preLitigationImportModal.style.setProperty('display', 'none', 'important');
+    }
+  }
+
+  if (btnOpenPreLitigationImport) {
+    btnOpenPreLitigationImport.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openPreLitImportModal();
+    });
+  }
+  if (btnClosePreLitigationImportModal) btnClosePreLitigationImportModal.addEventListener('click', closePreLitImportModal);
+  if (btnCancelPreLitImport) btnCancelPreLitImport.addEventListener('click', closePreLitImportModal);
+
+  if (btnChoosePreLitFile && fileInputPreLitigation) {
+    btnChoosePreLitFile.addEventListener('click', () => fileInputPreLitigation.click());
+  }
+
+  function downloadPreLitCsvTemplate() {
+    const csvContent = '\uFEFF' + `ชื่อลูกหนี้,ยอดหนี้ก่อนส่งฟ้อง,อัตราดอกเบี้ยก่อนฟ้อง,รูปแบบค่าปรับ,ค่าปรับสัญญาเช่า,วันผิดนัดชำระ,วันเสนอเรื่อง,หมายเหตุส่งฟ้อง
+นายสมคิด มั่งมี,250000,1.5,daily,500,2020-01-01,2021-01-01,ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดรายวัน
+บริษัท พัฒนาอสังหา จำกัด,450000,1.5,flat,25000,2019-06-01,2020-12-01,ค้างชำระค่าเช่าพื้นที่อาคารพาณิชย์
+บริษัท สยามการค้า จำกัด,180000,1.5,monthly,2500,2022-03-01,2023-01-01,ค้างชำระค่าเช่ารายเดือน`;
+    downloadFile(csvContent, 'Pre_Litigation_Debtors_Template.csv', 'text/csv;charset=utf-8;');
+  }
+
+  function downloadCourtCsvTemplate() {
+    const csvContent = '\uFEFF' + `หมายเลขคดีดำ,หมายเลขคดีแดง,ชื่อโจทก์,ชื่อจำเลย,เงินต้นฟ้อง,วันผิดนัดชำระ,วันฟ้องคดี,วันอ่านคำพิพากษา,ค่าธรรมเนียมศาลและทนาย
+ผบ. 123/2565,ผบ. 456/2565,ธนาคารพาณิชย์ จำกัด,นายอนันต์ มีทรัพย์,150000,2020-01-01,2021-01-01,2021-06-01,7500
+พ. 789/2566,พ. 999/2566,บริษัท ลีสซิ่ง จำกัด,นายวิชัย สมบูรณ์,320000,2021-05-01,2022-03-01,2022-09-01,12000`;
+    downloadFile(csvContent, 'Court_Cases_Template.csv', 'text/csv;charset=utf-8;');
+  }
+
+  const btnChoosePreLitImportFile = document.getElementById('btnChoosePreLitImportFile');
+  const btnChooseCourtImportFile = document.getElementById('btnChooseCourtImportFile');
+  const btnDownloadCourtCsvTemplate = document.getElementById('btnDownloadCourtCsvTemplate');
+
+  if (btnChoosePreLitImportFile && fileInput) {
+    btnChoosePreLitImportFile.addEventListener('click', () => fileInput.click());
+  }
+
+  if (btnChooseCourtImportFile && fileInput) {
+    btnChooseCourtImportFile.addEventListener('click', () => fileInput.click());
+  }
+
+  if (btnDownloadPreLitCsvTemplate) {
+    btnDownloadPreLitCsvTemplate.addEventListener('click', downloadPreLitCsvTemplate);
+  }
+
+  if (btnDownloadCourtCsvTemplate) {
+    btnDownloadCourtCsvTemplate.addEventListener('click', downloadCourtCsvTemplate);
+  }
+
+  if (fileInputPreLitigation) {
+    fileInputPreLitigation.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const text = evt.target.result;
+        preLitImportedDebtorsList = [];
+
+        if (file.name.endsWith('.json') || text.trim().startsWith('{') || text.trim().startsWith('[')) {
+          try {
+            const parsed = JSON.parse(text);
+            preLitImportedDebtorsList = Array.isArray(parsed) ? parsed : [parsed];
+          } catch (err) {
+            alert('❌ ไฟล์ JSON ไม่ถูกต้อง: ' + err.message);
+            return;
+          }
+        } else {
+          const parsedCsv = parseCsvData(text);
+          if (parsedCsv && parsedCsv.rows.length > 0) {
+            preLitImportedDebtorsList = parsedCsv.rows.map(r => ({
+              preLitigationDebtorName: r['ชื่อลูกหนี้'] || r['ผู้เช่า'] || r['ชื่อจำเลย'] || 'ลูกหนี้ก่อนฟ้อง',
+              preLitigationDebt: parseFloat(r['ยอดหนี้ก่อนส่งฟ้อง'] || r['ยอดหนี้']) || 0,
+              preLitigationInterestRate: parseFloat(r['อัตราดอกเบี้ยก่อนฟ้อง']) || 1.5,
+              rentalPenaltyType: r['รูปแบบค่าปรับ'] || 'flat',
+              rentalPenaltyFee: parseFloat(r['ค่าปรับสัญญาเช่า'] || r['คิดค่าปรับ']) || 0,
+              defaultDate: r['วันผิดนัดชำระ'] || r['วันผิดนัด'] || '2020-01-01',
+              filingDate: r['วันเสนอเรื่อง'] || r['วันฟ้องคดี'] || '2021-01-01',
+              preLitigationNotes: r['หมายเหตุส่งฟ้อง'] || ''
+            }));
+          }
+        }
+
+        if (preLitImportedDebtorsList.length === 0) {
+          alert('ไม่พบข้อมูลรายการลูกหนี้ในไฟล์');
+          return;
+        }
+
+        if (preLitImportedDebtorsList.length === 1) {
+          applyPreLitDebtorToForm(preLitImportedDebtorsList[0]);
+          closePreLitImportModal();
+          showToast('📥 นำเข้าข้อมูลลูกหนี้เรียบร้อยแล้ว');
+        } else {
+          if (selectPreLitImportedDebtor && preLitImportPreviewContainer) {
+            selectPreLitImportedDebtor.innerHTML = preLitImportedDebtorsList.map((d, idx) => `
+              <option value="${idx}">
+                [${idx + 1}] ${d.preLitigationDebtorName || d.defendantName || 'ลูกหนี้'} - ยอดหนี้: ${formatCurrency(d.preLitigationDebt || d.principalAmount || 0)}
+              </option>
+            `).join('');
+            preLitImportPreviewContainer.style.display = 'block';
+          }
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+      fileInputPreLitigation.value = '';
+    });
+  }
+
+  function applyPreLitDebtorToForm(d) {
+    if (!d) return;
+    if (d.preLitigationDebtorName || d.defendantName) {
+      document.getElementById('preLitigationDebtorName').value = d.preLitigationDebtorName || d.defendantName;
+    }
+    if (d.preLitigationDebt !== undefined || d.principalAmount !== undefined) {
+      document.getElementById('preLitigationDebt').value = d.preLitigationDebt !== undefined ? d.preLitigationDebt : d.principalAmount;
+    }
+    if (d.preLitigationInterestRate !== undefined) {
+      document.getElementById('preLitigationInterestRate').value = d.preLitigationInterestRate;
+    }
+    if (d.rentalPenaltyType !== undefined) {
+      document.getElementById('rentalPenaltyType').value = d.rentalPenaltyType;
+    }
+    if (d.rentalPenaltyFee !== undefined) {
+      document.getElementById('rentalPenaltyFee').value = d.rentalPenaltyFee;
+    }
+    if (d.defaultDate) {
+      document.getElementById('defaultDate').value = d.defaultDate;
+    }
+    if (d.filingDate) {
+      document.getElementById('filingDate').value = d.filingDate;
+    }
+    if (d.preLitigationNotes !== undefined) {
+      document.getElementById('preLitigationNotes').value = d.preLitigationNotes;
+    }
+
+    calculateAndRender();
+  }
+
+  if (btnApplyPreLitSelectedDebtor) {
+    btnApplyPreLitSelectedDebtor.addEventListener('click', () => {
+      const idx = parseInt(selectPreLitImportedDebtor.value, 10);
+      if (!isNaN(idx) && preLitImportedDebtorsList[idx]) {
+        applyPreLitDebtorToForm(preLitImportedDebtorsList[idx]);
+        closePreLitImportModal();
+        showToast('📥 โหลดข้อมูลลูกหนี้ลงฟอร์มเรียบร้อยแล้ว');
+      }
     });
   }
 
   // 8. Event Listeners Setup
-  if (btnSampleCase1) {
-    btnSampleCase1.addEventListener('click', (e) => {
+  // 7. Print Pre-Litigation Report for Legal Dept
+  function printPreLitigationReport() {
+    const preDebtor = document.getElementById('preLitigationDebtorName')?.value || document.getElementById('defendantName')?.value || '-';
+    const plaintiff = document.getElementById('plaintiffName')?.value || '-';
+    const preDebt = parseFloat(document.getElementById('preLitigationDebt')?.value) || 0;
+    const rentPenalty = parseFloat(document.getElementById('rentalPenaltyFee')?.value) || 0;
+    const preRate = parseFloat(document.getElementById('preLitigationInterestRate')?.value) || 1.5;
+    const defaultDateStr = document.getElementById('defaultDate')?.value || '-';
+    const filingDateStr = document.getElementById('filingDate')?.value || todayStr;
+    const notes = document.getElementById('preLitigationNotes')?.value || '-';
+
+    const tbody = document.getElementById('preLitigationTableBody');
+    const tableHtml = tbody ? tbody.innerHTML : '';
+
+    const printWin = window.open('', '_blank', 'width=900,height=750');
+    if (!printWin) {
+      alert('กรุณาอนุญาตให้เปิด Pop-up เพื่อพิมพ์เอกสารรายงานเสนอเรื่องส่งฝ่ายกฎหมาย');
+      return;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="th">
+      <head>
+        <meta charset="UTF-8">
+        <title>สรุปข้อมูลเสนอเรื่องดำเนินคดีส่งฝ่ายกฎหมาย - ${preDebtor}</title>
+        <style>
+          body { font-family: 'Sarabun', 'Segoe UI', Tahoma, sans-serif; padding: 2rem; color: #1e293b; line-height: 1.6; }
+          h1 { text-align: center; color: #1e3a8a; font-size: 1.5rem; margin-bottom: 0.25rem; }
+          .sub-header { text-align: center; color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem; }
+          .info-box { background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.95rem; }
+          .summary-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+          .card-box { border: 1px solid #cbd5e1; padding: 1rem; border-radius: 8px; background: #fff; text-align: center; }
+          .card-title { font-size: 0.82rem; color: #64748b; font-weight: bold; }
+          .card-val { font-size: 1.3rem; font-weight: bold; margin-top: 4px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+          th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+          th { background: #1e3a8a; color: #fff; font-weight: 600; }
+          .footer-sig { margin-top: 3rem; display: flex; justify-content: space-between; text-align: center; font-size: 0.95rem; }
+          .sig-line { border-top: 1px dashed #94a3b8; width: 220px; margin-top: 2.5rem; padding-top: 6px; }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>บันทึกข้อความเสนอเรื่องดำเนินคดีส่งฝ่ายกฎหมาย</h1>
+        <div class="sub-header">สรุปภาระหนี้ผิดนัดชำระและคำนวณดอกเบี้ยก่อนส่งฟ้อง | วันที่จัดทำ: ${formatDateThai(todayStr)}</div>
+
+        <div class="info-box">
+          <div class="info-grid">
+            <div><strong>ชื่อลูกหนี้ / ผู้เช่า:</strong> ${preDebtor}</div>
+            <div><strong>โจทก์ / ผู้ให้เช่า:</strong> ${plaintiff}</div>
+            <div><strong>วันผิดนัดชำระ:</strong> ${formatDateThai(defaultDateStr)}</div>
+            <div><strong>วันเสนอส่งฟ้อง:</strong> ${formatDateThai(filingDateStr)}</div>
+            <div><strong>อัตราดอกเบี้ยก่อนฟ้อง:</strong> ${preRate}% ต่อปี</div>
+            <div><strong>หมายเหตุส่งฟ้อง:</strong> ${notes}</div>
+          </div>
+        </div>
+
+        <h3 style="color: #1e3a8a; margin-bottom: 0.5rem;">สรุปภาระหนี้เสนอส่งฟ้อง</h3>
+        <div class="summary-cards">
+          <div class="card-box">
+            <div class="card-title">ยอดหนี้ค้างชำระก่อนฟ้อง</div>
+            <div class="card-val" style="color: #0f172a;">${formatCurrency(preDebt)}</div>
+          </div>
+          <div class="card-box">
+            <div class="card-title">คิดค่าปรับ (เฉพาะค่าเช่า)</div>
+            <div class="card-val" style="color: #e11d48;">${formatCurrency(rentPenalty)}</div>
+          </div>
+          <div class="card-box" style="border-color: #d97706; background: #fffbeb;">
+            <div class="card-title" style="color: #d97706;">ยอดรวมส่งฟ้องกฎหมาย</div>
+            <div class="card-val" style="color: #d97706;">${document.getElementById('displayPreLitigationTotal')?.innerText || '0.00 ฿'}</div>
+          </div>
+        </div>
+
+        <h3 style="color: #1e3a8a; margin-bottom: 0.5rem;">ตารางรายละเอียดการคำนวณผิดนัดชำระก่อนส่งฟ้อง</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ลำดับ / รายการ</th>
+              <th>ช่วงวันที่ผิดนัด</th>
+              <th>ระยะเวลา</th>
+              <th>อัตรา (%)</th>
+              <th>ยอดหนี้ตั้งต้น (บาท)</th>
+              <th>ดอกเบี้ย / ค่าปรับช่วงก่อนฟ้อง (บาท)</th>
+              <th>ยอดรวมค้างชำระก่อนฟ้อง (บาท)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableHtml}
+          </tbody>
+        </table>
+
+        <div class="footer-sig">
+          <div>
+            <div class="sig-line">ลงชื่อ.......................................................</div>
+            <div>( ผู้เสนอเรื่องส่งดำเนินคดี )</div>
+            <div>วันที่ ........../........../..........</div>
+          </div>
+          <div>
+            <div class="sig-line">ลงชื่อ.......................................................</div>
+            <div>( ฝ่ายกฎหมายผู้รับเรื่อง )</div>
+            <div>วันที่ ........../........../..........</div>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWin.document.write(htmlContent);
+    printWin.document.close();
+  }
+
+  const btnPrintPreLitigationReport = document.getElementById('btnPrintPreLitigationReport');
+  if (btnPrintPreLitigationReport) {
+    btnPrintPreLitigationReport.addEventListener('click', (e) => {
       e.preventDefault();
-      presetButtons.forEach(b => b.classList.remove('active'));
-      btnSampleCase1.classList.add('active');
-      loadSampleCase1();
+      printPreLitigationReport();
     });
   }
 
-  if (btnSampleCase2) {
-    btnSampleCase2.addEventListener('click', (e) => {
+  const btnPreLitCalcModeDaily = document.getElementById('btnPreLitCalcModeDaily');
+  const btnPreLitCalcModeMonthly = document.getElementById('btnPreLitCalcModeMonthly');
+
+  if (btnPreLitCalcModeDaily) {
+    btnPreLitCalcModeDaily.addEventListener('click', (e) => {
       e.preventDefault();
-      presetButtons.forEach(b => b.classList.remove('active'));
-      btnSampleCase2.classList.add('active');
-      loadSampleCase2();
+      preLitCalcMode = 'daily';
+      btnPreLitCalcModeDaily.classList.add('active');
+      btnPreLitCalcModeMonthly?.classList.remove('active');
+      const penaltySel = document.getElementById('rentalPenaltyType');
+      if (penaltySel && penaltySel.value === 'monthly') {
+        penaltySel.value = 'daily';
+      }
+      calculateAndRender();
+    });
+  }
+
+  if (btnPreLitCalcModeMonthly) {
+    btnPreLitCalcModeMonthly.addEventListener('click', (e) => {
+      e.preventDefault();
+      preLitCalcMode = 'monthly';
+      btnPreLitCalcModeMonthly.classList.add('active');
+      btnPreLitCalcModeDaily?.classList.remove('active');
+      const penaltySel = document.getElementById('rentalPenaltyType');
+      if (penaltySel && penaltySel.value === 'daily') {
+        penaltySel.value = 'monthly';
+      }
+      calculateAndRender();
     });
   }
 
@@ -1086,8 +1932,13 @@ document.addEventListener('DOMContentLoaded', () => {
         filingDate: document.getElementById('filingDate')?.value,
         judgmentDate: document.getElementById('judgmentDate')?.value,
         calcTargetDate: document.getElementById('calcTargetDate')?.value,
-        courtFeeAwarded: document.getElementById('courtFeeAwarded')?.value,
-        attorneyFeeAwarded: document.getElementById('attorneyFeeAwarded')?.value,
+        courtFeeAwarded: document.getElementById('courtFeeAwarded')?.value || 0,
+        attorneyFeeAwarded: 0,
+        preLitigationDebt: document.getElementById('preLitigationDebt')?.value || 0,
+        rentalPenaltyFee: document.getElementById('rentalPenaltyFee')?.value || 0,
+        preLitigationNotes: document.getElementById('preLitigationNotes')?.value || '',
+        preLitigationDebtor: document.getElementById('preLitigationDebtorName')?.value || '',
+        preLitigationRate: document.getElementById('preLitigationInterestRate')?.value || 7.5,
         interestStages,
         partialPayments
       };
@@ -1134,11 +1985,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     courtForm.querySelectorAll('input, select').forEach(input => {
-      input.addEventListener('change', () => {
-        if (currentPreset === 'legal2021' || currentPreset === 'contract15' || currentPreset === 'contractAndLegal') {
-          applyPreset(currentPreset);
-        }
-        calculateAndRender();
+      ['change', 'input'].forEach(evt => {
+        input.addEventListener(evt, () => {
+          if (currentPreset === 'legal2021') {
+            applyPreset(currentPreset);
+          }
+          calculateAndRender();
+        });
       });
     });
   }

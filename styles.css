@@ -162,6 +162,12 @@ body {
 /* ==============================
    CARDS
    ============================== */
+#courtForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -604,6 +610,48 @@ select.form-control { cursor: pointer; background-image: none; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
+/* Filter Tab Buttons in Saved Cases Modal */
+.btn-filter-case {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-filter-case:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn-filter-case.active {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+  box-shadow: 0 3px 8px rgba(37,99,235,0.35) !important;
+  font-weight: 700 !important;
+  transform: translateY(-1px);
+}
+
+.btn-filter-case[data-filter="prelit"].active {
+  background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 3px 8px rgba(37,99,235,0.35) !important;
+}
+
+.btn-filter-case[data-filter="court"].active {
+  background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+  border-color: #d97706 !important;
+  box-shadow: 0 3px 8px rgba(217,119,6,0.35) !important;
+}
+
 /* ==============================
    MODAL OVERLAY
    ============================== */
@@ -620,6 +668,10 @@ select.form-control { cursor: pointer; background-image: none; }
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+}
+
+.modal-overlay.active {
+  display: flex !important;
 }
 
 .modal-content {

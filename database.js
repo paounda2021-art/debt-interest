@@ -37,23 +37,37 @@ async function initDb() {
 function createSchema() {
   db.run(`
     CREATE TABLE IF NOT EXISTS cases (
-      id               INTEGER PRIMARY KEY AUTOINCREMENT,
-      case_black_no    TEXT    DEFAULT '',
-      case_red_no      TEXT    DEFAULT '',
-      plaintiff_name   TEXT    DEFAULT '',
-      defendant_name   TEXT    DEFAULT '',
-      principal_amount REAL    DEFAULT 0,
-      default_date     TEXT    DEFAULT '',
-      filing_date      TEXT    DEFAULT '',
-      judgment_date    TEXT    DEFAULT '',
-      court_fee        REAL    DEFAULT 0,
-      attorney_fee     REAL    DEFAULT 0,
-      interest_stages  TEXT    DEFAULT '[]',
-      partial_payments TEXT    DEFAULT '[]',
-      saved_at         TEXT    NOT NULL,
-      updated_at       TEXT    NOT NULL
+      id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_black_no           TEXT    DEFAULT '',
+      case_red_no             TEXT    DEFAULT '',
+      plaintiff_name          TEXT    DEFAULT '',
+      defendant_name          TEXT    DEFAULT '',
+      principal_amount        REAL    DEFAULT 0,
+      default_date            TEXT    DEFAULT '',
+      filing_date             TEXT    DEFAULT '',
+      judgment_date           TEXT    DEFAULT '',
+      court_fee               REAL    DEFAULT 0,
+      attorney_fee            REAL    DEFAULT 0,
+      pre_litigation_debt      REAL    DEFAULT 0,
+      rental_penalty_fee      REAL    DEFAULT 0,
+      pre_litigation_notes     TEXT    DEFAULT '',
+      pre_litigation_debtor   TEXT    DEFAULT '',
+      pre_litigation_rate     REAL    DEFAULT 7.5,
+      interest_stages         TEXT    DEFAULT '[]',
+      partial_payments        TEXT    DEFAULT '[]',
+      saved_at                TEXT    NOT NULL,
+      updated_at              TEXT    NOT NULL
     )
   `);
+
+  // Migrations for existing database
+  try { db.run(`ALTER TABLE cases ADD COLUMN pre_litigation_debt REAL DEFAULT 0`); } catch (e) {}
+  try { db.run(`ALTER TABLE cases ADD COLUMN rental_penalty_fee REAL DEFAULT 0`); } catch (e) {}
+  try { db.run(`ALTER TABLE cases ADD COLUMN pre_litigation_notes TEXT DEFAULT ''`); } catch (e) {}
+  try { db.run(`ALTER TABLE cases ADD COLUMN pre_litigation_debtor TEXT DEFAULT ''`); } catch (e) {}
+  try { db.run(`ALTER TABLE cases ADD COLUMN pre_litigation_rate REAL DEFAULT 1.5`); } catch (e) {}
+  try { db.run(`ALTER TABLE cases ADD COLUMN rental_penalty_type TEXT DEFAULT 'flat'`); } catch (e) {}
+  try { db.run(`ALTER TABLE cases ADD COLUMN category TEXT DEFAULT 'prelit'`); } catch (e) {}
 }
 
 function saveToDisk() {
@@ -86,10 +100,17 @@ function rowToCase(row) {
     judgmentDate:       row.judgment_date,
     courtFeeAwarded:    row.court_fee,
     attorneyFeeAwarded: row.attorney_fee,
-    interestStages:     safeJson(row.interest_stages, []),
-    partialPayments:    safeJson(row.partial_payments, []),
-    savedAt:            row.saved_at,
-    updatedAt:          row.updated_at,
+    preLitigationDebt:    row.pre_litigation_debt || 0,
+    rentalPenaltyFee:     row.rental_penalty_fee || 0,
+    preLitigationNotes:   row.pre_litigation_notes || '',
+    preLitigationDebtor:  row.pre_litigation_debtor || '',
+    preLitigationRate:    row.pre_litigation_rate !== undefined ? row.pre_litigation_rate : 1.5,
+    rentalPenaltyType:    row.rental_penalty_type || 'flat',
+    category:             row.category || (row.case_black_no ? 'court' : 'prelit'),
+    interestStages:       safeJson(row.interest_stages, []),
+    partialPayments:      safeJson(row.partial_payments, []),
+    savedAt:              row.saved_at,
+    updatedAt:            row.updated_at,
     // snake_case aliases (for badge count etc.)
     case_black_no:  row.case_black_no,
     case_red_no:    row.case_red_no,
@@ -131,9 +152,12 @@ function insertCase(data) {
     INSERT INTO cases
       (case_black_no, case_red_no, plaintiff_name, defendant_name,
        principal_amount, default_date, filing_date, judgment_date,
-       court_fee, attorney_fee, interest_stages, partial_payments,
+       court_fee, attorney_fee, pre_litigation_debt, rental_penalty_fee,
+       pre_litigation_notes, pre_litigation_debtor, pre_litigation_rate,
+       rental_penalty_type, category,
+       interest_stages, partial_payments,
        saved_at, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `, [
     data.caseBlackNo    || '',
     data.caseRedNo      || '',
@@ -145,6 +169,13 @@ function insertCase(data) {
     data.judgmentDate   || '',
     data.courtFeeAwarded    || 0,
     data.attorneyFeeAwarded || 0,
+    data.preLitigationDebt  || 0,
+    data.rentalPenaltyFee   || 0,
+    data.preLitigationNotes || '',
+    data.preLitigationDebtor || '',
+    data.preLitigationRate !== undefined ? data.preLitigationRate : 7.5,
+    data.rentalPenaltyType || 'flat',
+    data.category || 'prelit',
     JSON.stringify(data.interestStages  || []),
     JSON.stringify(data.partialPayments || []),
     now, now
@@ -161,7 +192,10 @@ function updateCase(id, data) {
     UPDATE cases SET
       case_black_no = ?, case_red_no = ?, plaintiff_name = ?, defendant_name = ?,
       principal_amount = ?, default_date = ?, filing_date = ?, judgment_date = ?,
-      court_fee = ?, attorney_fee = ?, interest_stages = ?, partial_payments = ?,
+      court_fee = ?, attorney_fee = ?, pre_litigation_debt = ?, rental_penalty_fee = ?,
+      pre_litigation_notes = ?, pre_litigation_debtor = ?, pre_litigation_rate = ?,
+      rental_penalty_type = ?, category = ?,
+      interest_stages = ?, partial_payments = ?,
       updated_at = ?
     WHERE id = ?
   `, [
@@ -175,6 +209,13 @@ function updateCase(id, data) {
     data.judgmentDate   || '',
     data.courtFeeAwarded    || 0,
     data.attorneyFeeAwarded || 0,
+    data.preLitigationDebt  || 0,
+    data.rentalPenaltyFee   || 0,
+    data.preLitigationNotes || '',
+    data.preLitigationDebtor || '',
+    data.preLitigationRate !== undefined ? data.preLitigationRate : 7.5,
+    data.rentalPenaltyType || 'flat',
+    data.category || 'prelit',
     JSON.stringify(data.interestStages  || []),
     JSON.stringify(data.partialPayments || []),
     now,

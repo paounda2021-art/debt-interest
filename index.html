@@ -60,47 +60,180 @@
     <!-- Input Form Section -->
     <section class="sidebar-form no-print">
       
-      <!-- Preset Selection -->
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <i data-lucide="sparkles"></i> รูปแบบคำพิพากษา & ข้อมูลตัวอย่าง
-          </h2>
-        </div>
-        
-        <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">
-          <i data-lucide="folder-open" style="width: 14px; vertical-align: middle;"></i> เลือกชุดข้อมูลคดีตัวอย่าง (Sample Datasets):
-        </div>
-        <div class="preset-bar" style="margin-bottom: 1rem;">
-          <button class="preset-btn" id="btnSampleCase1" style="background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.4); color: #93c5fd;">
-            <i data-lucide="file-check-2"></i> ตัวอย่าง 1: คดีกู้ยืม + ผ่อนชำระ 2 งวด
-          </button>
-          <button class="preset-btn" id="btnSampleCase2" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #6ee7b7;">
-            <i data-lucide="file-check-2"></i> ตัวอย่าง 2: คดีผิดสัญญา 15% + กฎหมายใหม่
-          </button>
-        </div>
-
-        <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">
-          <i data-lucide="sliders" style="width: 14px; vertical-align: middle;"></i> เลือก Preset อัตราดอกเบี้ย:
-        </div>
-        <div class="preset-bar">
-          <button class="preset-btn active" data-preset="legal2021">
-            <i data-lucide="gavel"></i> ผิดนัดตามกฎหมายใหม่ (7.5% -> 5%)
-          </button>
-          <button class="preset-btn" data-preset="contract15">
-            <i data-lucide="file-text"></i> อัตราตามสัญญา 15% ต่อปี
-          </button>
-          <button class="preset-btn" data-preset="contractAndLegal">
-            <i data-lucide="git-merge"></i> สัญญา 15% ถึงวันฟ้อง + 5% หลังฟ้อง
-          </button>
-          <button class="preset-btn" data-preset="custom">
-            <i data-lucide="sliders"></i> กำหนดเอง (Custom Stages)
-          </button>
-        </div>
-      </div>
+    <!-- Input Form Section -->
+    <section class="sidebar-form no-print">
 
       <!-- Court Judgment Form -->
       <form id="courtForm">
+        <!-- Pre-Litigation Legal Claim Card -->
+        <div class="card" style="border-left: 4px solid var(--primary-gold);">
+          <div class="card-header" style="flex-wrap: wrap; gap: 10px; align-items: center;">
+            <h2 class="card-title">
+              <i data-lucide="scale"></i> ข้อมูลก่อนส่งฟ้อง (สำหรับส่งฝ่ายกฎหมาย)
+            </h2>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary btn-danger-sm no-print" id="btnPrintPreLitigationReport" style="background: var(--royal); color: white; border: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                <i data-lucide="printer"></i> พิมพ์สรุปส่งฝ่ายกฎหมาย
+              </button>
+              <button type="button" class="btn btn-secondary no-print" id="btnClearPreLitigationForm" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;" title="ล้างข้อมูลช่องกรอกในแบบฟอร์ม">
+                <i data-lucide="rotate-ccw"></i> ล้างข้อมูล
+              </button>
+              <input type="file" id="fileInputPreLitigation" accept=".csv, .json" style="display: none;">
+            </div>
+          </div>
+          <div class="legal-notice" style="border-left-color: var(--primary-blue); background: rgba(59, 130, 246, 0.08); color: var(--text);">
+            <i data-lucide="info" style="flex-shrink: 0; width: 18px;"></i>
+            <span>
+              <strong>สรุปยอดหนี้และค่าปรับสัญญาเช่า:</strong> กรอกชื่อลูกหนี้ ยอดหนี้ตั้งต้น ค่าปรับ และอัตราดอกเบี้ยผิดนัดเพื่อเสนอเรื่องส่งฝ่ายกฎหมาย
+            </span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">ชื่อลูกหนี้ / ผู้เช่า (Debtor Name)</label>
+              <input type="text" id="preLitigationDebtorName" class="form-control" placeholder="เช่น นายสมคิด มั่งมี / บริษัท ผู้เช่า จำกัด">
+            </div>
+            <div class="form-group">
+              <label class="form-label">อัตราดอกเบี้ยผิดนัดก่อนฟ้อง (% ต่อปี)</label>
+              <input type="number" id="preLitigationInterestRate" class="form-control" placeholder="เช่น 1.5 หรือ 7.5" value="1.5" step="any" min="0">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">ยอดหนี้ก่อนส่งฟ้อง (บาท)</label>
+              <input type="text" inputmode="decimal" id="preLitigationDebt" class="form-control" placeholder="เช่น 120,000.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">รูปแบบคิดค่าปรับสัญญาเช่า</label>
+              <select id="rentalPenaltyType" class="form-control">
+                <option value="flat">แบบเหมาจ่ายรวม (บาท)</option>
+                <option value="daily">แบบรายวัน (บาท/วัน)</option>
+                <option value="monthly">แบบรายเดือน (บาท/เดือน)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" id="lblRentalPenaltyFee">จำนวนเงินค่าปรับ (บาท)</label>
+              <input type="text" inputmode="decimal" id="rentalPenaltyFee" class="form-control" placeholder="เช่น 15,000.00 (เหมาจ่าย) หรือ 500.00 (รายวัน)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">หมายเหตุ / รายละเอียดสัญญาเช่า</label>
+              <input type="text" id="preLitigationNotes" class="form-control" placeholder="เช่น ค่าเช่าค้างชำระ ม.ค.-เม.ย. + ค่าปรับผิดนัดตามสัญญาเช่าข้อ 5">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">วันผิดนัดชำระ *</label>
+              <input type="date" id="preLitDefaultDate" class="form-control" value="2020-01-01">
+            </div>
+            <div class="form-group">
+              <label class="form-label">วันเสนอเรื่องส่งฟ้อง *</label>
+              <input type="date" id="preLitFilingDate" class="form-control" value="2021-01-01">
+            </div>
+          </div>
+        </div>
+
+        <!-- Pre-Litigation Summary Card for Legal Dept -->
+        <div class="card" id="preLitigationSummaryCard" style="border: 1.5px solid var(--primary-blue); background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(30,58,138,0.05));">
+          <div class="card-header" style="flex-wrap: wrap; gap: 10px; align-items: center;">
+            <h2 class="card-title" style="color: var(--primary-blue);">
+              <i data-lucide="file-badge-2"></i> สรุปรายการข้อมูลก่อนส่งฟ้องกฎหมาย (Pre-Litigation Claim Summary)
+            </h2>
+            <div id="displayPreLitigationDebtor" style="font-size: 0.92rem; font-weight: 700; color: var(--primary-blue); background: var(--card-bg, #fff); padding: 4px 12px; border-radius: 16px; border: 1px solid var(--border-color, #cbd5e1);">
+              👤 ลูกหนี้ / ผู้เช่า: -
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; padding: 0.5rem 0;">
+            <div style="background: var(--card-bg, #fff); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color, #e2e8f0);">
+              <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">ยอดหนี้ค้างชำระก่อนฟ้อง</span>
+              <div id="displayPreLitigationDebt" style="font-size: 1.2rem; font-weight: 700; color: var(--text); margin-top: 4px;">0.00 ฿</div>
+            </div>
+            <div style="background: var(--card-bg, #fff); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color, #e2e8f0);">
+              <span style="font-size: 0.82rem; color: var(--accent-rose, #e11d48); font-weight: 600;">คิดค่าปรับ (เฉพาะค่าเช่า)</span>
+              <div id="displayRentalPenaltyFee" style="font-size: 1.2rem; font-weight: 700; color: var(--accent-rose, #e11d48); margin-top: 4px;">0.00 ฿</div>
+            </div>
+            <div style="background: var(--card-bg, #fff); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color, #e2e8f0);">
+              <span style="font-size: 0.82rem; color: var(--primary-gold, #d97706); font-weight: 600;">ยอดรวมส่งฟ้องกฎหมาย (รวมค่าปรับ)</span>
+              <div id="displayPreLitigationTotal" style="font-size: 1.25rem; font-weight: 800; color: var(--primary-gold, #d97706); margin-top: 4px;">0.00 ฿</div>
+            </div>
+          </div>
+          <div id="displayPreLitigationNotes" style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic;"></div>
+        </div>
+
+        <!-- Pre-Litigation Default Calculation Ledger Card -->
+        <div class="card" id="preLitigationLedgerCard" style="border-left: 4px solid var(--primary-blue);">
+          <div class="card-header" style="flex-wrap: wrap; gap: 10px; align-items: center;">
+            <h2 class="card-title" style="color: var(--primary-blue);">
+              <i data-lucide="calculator"></i> ตารางรายละเอียดการคำนวณผิดนัดชำระก่อนส่งฟ้อง (Pre-Litigation Calculation Ledger)
+            </h2>
+            <div class="preset-bar" style="margin-bottom: 0;">
+              <button type="button" class="preset-btn active" id="btnPreLitCalcModeDaily">
+                <i data-lucide="calendar"></i> คำนวณแบบรายวัน (Daily)
+              </button>
+              <button type="button" class="preset-btn" id="btnPreLitCalcModeMonthly">
+                <i data-lucide="calendar-days"></i> คำนวณแบบรายเดือน (Monthly)
+              </button>
+            </div>
+          </div>
+
+          <div style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 12px; font-weight: 500;">
+            <span id="preLitCalcNoticeText">📅 คำนวณผิดนัดจาก <strong>วันผิดนัดชำระ</strong> ถึง <strong>วันฟ้องคดี/วันคำนวณ</strong> (โหมดคำนวณรายวัน)</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="ledger-table">
+              <thead>
+                <tr>
+                  <th>ลำดับ / รายการ</th>
+                  <th>ช่วงวันที่ผิดนัด</th>
+                  <th>ระยะเวลา</th>
+                  <th>อัตรา (%)</th>
+                  <th>ยอดหนี้ตั้งต้น (บาท)</th>
+                  <th>ดอกเบี้ย / ค่าปรับช่วงก่อนฟ้อง (บาท) <span id="thPreLitCalcBadge" style="font-size:0.75rem; color:#93c5fd; font-weight:500;">(รายวัน)</span></th>
+                  <th>ยอดรวมค้างชำระก่อนฟ้อง (บาท)</th>
+                </tr>
+              </thead>
+              <tbody id="preLitigationTableBody">
+                <!-- Dynamically populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Category Section Divider -->
+        <div class="section-divider no-print" style="margin: 1rem 0; display: flex; align-items: center; gap: 1rem;">
+          <hr style="flex: 1; border: none; border-top: 2px dashed #cbd5e1;">
+          <span style="background: rgba(30,58,138,0.06); color: #1e3a8a; font-size: 0.88rem; font-weight: 700; padding: 6px 16px; border-radius: 20px; border: 1px solid rgba(30,58,138,0.18); display: inline-flex; align-items: center; gap: 6px;">
+            <i data-lucide="gavel" style="width: 16px;"></i> หมวดข้อมูลคดี & คำสั่งศาล (Court Judgment Section)
+          </span>
+          <hr style="flex: 1; border: none; border-top: 2px dashed #cbd5e1;">
+        </div>
+
+        <!-- Preset Selection -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i data-lucide="sparkles"></i> รูปแบบอัตราดอกเบี้ยคำพิพากษา
+            </h2>
+          </div>
+
+          <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">
+            <i data-lucide="sliders" style="width: 14px; vertical-align: middle;"></i> เลือก Preset อัตราดอกเบี้ย:
+          </div>
+          <div class="preset-bar">
+            <button class="preset-btn active" data-preset="legal2021">
+              <i data-lucide="gavel"></i> ผิดนัดตามกฎหมายใหม่ (7.5% -> 5%)
+            </button>
+            <button class="preset-btn" data-preset="custom">
+              <i data-lucide="sliders"></i> กำหนดเอง (Custom Stages)
+            </button>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-header">
             <h2 class="card-title">
@@ -132,7 +265,7 @@
 
           <div class="form-group">
             <label class="form-label">เงินต้นฟ้องตามคำพิพากษา (บาท)</label>
-            <input type="number" id="principalAmount" class="form-control" value="100000" step="1000" min="0" required>
+            <input type="text" inputmode="decimal" id="principalAmount" class="form-control" value="100,000.00" required>
           </div>
 
           <div class="form-row">
@@ -157,15 +290,9 @@
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">ค่าธรรมเนียมศาลที่ศาลสั่งใช้แทน (บาท)</label>
-              <input type="number" id="courtFeeAwarded" class="form-control" value="2500" min="0">
-            </div>
-            <div class="form-group">
-              <label class="form-label">ค่าทนายความที่ศาลสั่งใช้แทน (บาท)</label>
-              <input type="number" id="attorneyFeeAwarded" class="form-control" value="3000" min="0">
-            </div>
+          <div class="form-group">
+            <label class="form-label">ค่าธรรมเนียมศาลและค่าทนายความ (บาท)</label>
+            <input type="text" inputmode="decimal" id="courtFeeAwarded" class="form-control" value="5,500.00">
           </div>
         </div>
 
@@ -223,8 +350,8 @@
 
     <!-- Results Section -->
     <section class="results-dashboard">
-      
-      <!-- Top Summary Cards -->
+
+      <!-- Top Summary Cards (Post-Judgment / Court) -->
       <div class="summary-grid">
         <div class="stat-card gold">
           <div class="stat-label">ยอดหนี้สุทธิรวม ณ วันที่คำนวณ</div>
@@ -316,85 +443,89 @@
   </main>
 
   <!-- Import Data Modal -->
-  <div id="importModal" class="modal-overlay no-print" style="display: none !important;">
-    <div class="modal-content">
+  <div id="importModal" class="modal-overlay no-print" style="display: none;">
+    <div class="modal-content" style="max-width: 680px;">
       <div class="modal-header">
         <h2 class="card-title">
-          <i data-lucide="upload-cloud"></i> นำเข้าข้อมูลลูกหนี้ & คดี (Import Data)
+          <i data-lucide="upload-cloud"></i> นำเข้าข้อมูลลูกหนี้เข้าสู่ระบบ (Import Debtors Data)
         </h2>
         <button type="button" class="modal-close-btn" id="btnCloseImportModal">&times;</button>
       </div>
 
       <div class="modal-body">
-        <div class="tab-header">
-          <button type="button" class="tab-btn active" data-tab="tabFileUpload">
-            <i data-lucide="file-up"></i> อัปโหลดไฟล์ (JSON / CSV)
-          </button>
-          <button type="button" class="tab-btn" data-tab="tabTextPaste">
-            <i data-lucide="clipboard-type"></i> วางข้อความ (Paste Text)
-          </button>
-          <button type="button" class="tab-btn" data-tab="tabTemplates">
-            <i data-lucide="file-spreadsheet"></i> ดาวน์โหลดไฟล์ตัวอย่าง
-          </button>
+        <div style="font-size: 0.92rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem;">
+          📌 เลือกหมวดหมู่ลูกหนี้ที่ต้องการนำเข้าข้อมูล:
         </div>
 
-        <!-- Tab 1: File Upload -->
-        <div id="tabFileUpload" class="tab-content active">
-          <div class="drop-zone" id="dropZone">
-            <i data-lucide="upload-cloud" style="width: 44px; height: 44px; color: var(--primary-gold); margin-bottom: 8px;"></i>
-            <p style="font-weight: 600; font-size: 1rem;">ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์</p>
-            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
-              รองรับไฟล์ <strong>.JSON</strong> (ไฟล์สำรองข้อมูล) และ <strong>.CSV</strong> (ข้อมูลลูกหนี้ / ประวัติชำระเงิน)
-            </p>
-            <input type="file" id="fileInput" accept=".json,.csv" style="display: none;">
+        <!-- 2 Category Cards for Selection -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+          
+          <!-- Category 1: Pre-Litigation -->
+          <div style="border: 2px solid #3b82f6; border-radius: 12px; padding: 1.25rem; background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(29,78,216,0.02)); text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #1d4ed8; margin-bottom: 6px;">
+                ⚖️ ลูกหนี้ก่อนฟ้อง
+              </div>
+              <div style="font-size: 0.8rem; color: #475569; margin-bottom: 12px; line-height: 1.4;">
+                สำหรับส่งเรื่องฝ่ายกฎหมาย, คำนวณดอกเบี้ยก่อนส่งฟ้อง และค่าปรับสัญญาเช่า
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button type="button" class="btn btn-primary" id="btnChoosePreLitImportFile" style="background: #1d4ed8; color: white; width: 100%; font-weight: 600; font-size: 0.85rem; padding: 8px;">
+                <i data-lucide="upload-cloud"></i> เลือกไฟล์นำเข้า CSV / JSON
+              </button>
+              <button type="button" class="btn btn-secondary" id="btnDownloadPreLitCsvTemplate" style="width: 100%; font-size: 0.8rem; padding: 6px;">
+                <i data-lucide="download"></i> แม่แบบ CSV (ก่อนฟ้อง)
+              </button>
+            </div>
           </div>
-          <div id="uploadFileInfo" style="margin-top: 12px; display: none;" class="legal-notice"></div>
-        </div>
 
-        <!-- Tab 2: Text Paste -->
-        <div id="tabTextPaste" class="tab-content">
-          <p class="form-label">วางข้อความ JSON หรือ CSV ที่คัดลอกมาจาก Excel/ระบบอื่น:</p>
-          <textarea id="importTextarea" class="form-control" rows="8" placeholder='ตัวอย่าง JSON:
-{
-  "caseBlackNo": "พ. 101/2565",
-  "caseRedNo": "พ. 202/2565",
-  "plaintiffName": "ธนาคารไทย",
-  "defendantName": "นายสมคิด",
-  "principalAmount": 150000,
-  "defaultDate": "2020-01-01",
-  "filingDate": "2021-01-01",
-  "courtFeeAwarded": 3000,
-  "attorneyFeeAwarded": 4000
-}'></textarea>
-        </div>
-
-        <!-- Tab 3: Download Templates -->
-        <div id="tabTemplates" class="tab-content">
-          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 12px;">
-            ดาวน์โหลดไฟล์แม่แบบตัวอย่างเพื่อใช้ในการกรอกข้อมูลลูกหนี้และประวัติการชำระเงิน:
-          </p>
-          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary" id="btnDownloadCsvTemplate">
-              <i data-lucide="file-spreadsheet"></i> แม่แบบไฟล์ CSV (Debtor Template.csv)
-            </button>
-            <button type="button" class="btn btn-secondary" id="btnDownloadJsonTemplate">
-              <i data-lucide="file-code"></i> แม่แบบไฟล์ JSON (Debtor Template.json)
-            </button>
+          <!-- Category 2: Court Cases -->
+          <div style="border: 2px solid #d97706; border-radius: 12px; padding: 1.25rem; background: linear-gradient(135deg, rgba(217,119,6,0.06), rgba(180,83,9,0.02)); text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #d97706; margin-bottom: 6px;">
+                🏛️ ลูกหนี้คดี & คำพิพากษา
+              </div>
+              <div style="font-size: 0.8rem; color: #475569; margin-bottom: 12px; line-height: 1.4;">
+                สำหรับข้อมูลคดีดำ/แดง, โจทก์-จำเลย, เงินต้นฟ้อง และอัตราดอกเบี้ยคำพิพากษา
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button type="button" class="btn btn-primary" id="btnChooseCourtImportFile" style="background: #d97706; color: white; width: 100%; font-weight: 600; font-size: 0.85rem; padding: 8px;">
+                <i data-lucide="upload-cloud"></i> เลือกไฟล์นำเข้า CSV / JSON
+              </button>
+              <button type="button" class="btn btn-secondary" id="btnDownloadCourtCsvTemplate" style="width: 100%; font-size: 0.8rem; padding: 6px;">
+                <i data-lucide="download"></i> แม่แบบ CSV (ลูกหนี้คดี)
+              </button>
+            </div>
           </div>
+
         </div>
+
+        <!-- Hidden File Input for Category Card Buttons -->
+        <input type="file" id="fileInput" accept=".json,.csv" style="display: none;">
+
+        <!-- Imported Debtor Preview Selection Dropdown -->
+        <div id="importPreviewContainer" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #cbd5e1;">
+          <div style="font-size: 0.88rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 8px;">
+            📋 เลือกลูกหนี้จากไฟล์เพื่อโหลดลงฟอร์ม:
+          </div>
+          <select id="selectImportedDebtor" class="form-control" style="margin-bottom: 1rem;"></select>
+          <button type="button" class="btn btn-primary" id="btnApplySelectedDebtor" style="width: 100%; background: #1d4ed8; color: white;">
+            <i data-lucide="check-circle"></i> โหลดข้อมูลลูกหนี้ที่เลือกลงฟอร์ม
+          </button>
+        </div>
+
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="btnCancelImport">ยกเลิก</button>
-        <button type="button" class="btn btn-primary" id="btnConfirmImport">
-          <i data-lucide="check"></i> ยืนยันนำเข้าข้อมูลเข้าสู่ระบบ
-        </button>
+        <button type="button" class="btn btn-secondary" id="btnCancelImport">ปิดหน้าต่าง</button>
       </div>
     </div>
   </div>
 
   <!-- Saved Cases Directory Modal -->
-  <div id="savedCasesModal" class="modal-overlay no-print" style="display: none !important;">
+  <div id="savedCasesModal" class="modal-overlay no-print" style="display: none;">
     <div class="modal-content" style="max-width: 880px;">
       <div class="modal-header">
         <h2 class="card-title">
@@ -404,13 +535,21 @@
       </div>
 
       <div class="modal-body">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
-          <p style="font-size: 0.88rem; color: var(--text-muted);">
-            รายการคดีลูกหนี้ที่บันทึกเก็บไว้ในระบบเบราว์เซอร์นี้ (Local Database):
-          </p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary btn-filter-case active" data-filter="all" id="btnFilterCaseAll" style="font-size: 0.82rem; padding: 5px 12px; font-weight: 600;">📋 ทั้งหมด</button>
+            <button type="button" class="btn btn-secondary btn-filter-case" data-filter="prelit" id="btnFilterCasePreLit" style="font-size: 0.82rem; padding: 5px 12px; font-weight: 600;">⚖️ ลูกหนี้ก่อนฟ้อง</button>
+            <button type="button" class="btn btn-secondary btn-filter-case" data-filter="court" id="btnFilterCaseCourt" style="font-size: 0.82rem; padding: 5px 12px; font-weight: 600;">🏛️ ลูกหนี้คดี</button>
+          </div>
           <button type="button" class="btn btn-primary" id="btnModalSaveCurrentCase" style="background: linear-gradient(135deg, #10b981, #047857); color: #fff;">
             <i data-lucide="plus"></i> บันทึกคดีปัจจุบันลงคลัง
           </button>
+        </div>
+
+        <!-- Search Input Bar -->
+        <div style="position: relative; margin-bottom: 12px;">
+          <input type="text" id="inputSearchSavedCases" class="form-control" placeholder="🔍 ค้นหาชื่อลูกหนี้, ผู้เช่า, จำเลย, เจ้าหนี้ หรือหมายเลขคดีดำ/แดง..." style="padding-left: 36px; height: 40px; border-radius: 8px; font-size: 0.88rem;">
+          <i data-lucide="search" style="position: absolute; left: 12px; top: 11px; width: 18px; height: 18px; color: var(--text-muted, #94a3b8); pointer-events: none;"></i>
         </div>
 
         <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
@@ -439,7 +578,7 @@
   </div>
 
   <!-- Add New Debtor Modal -->
-  <div id="addDebtorModal" class="modal-overlay no-print" style="display: none !important;">
+  <div id="addDebtorModal" class="modal-overlay no-print" style="display: none;">
     <div class="modal-content" style="max-width: 660px;">
       <div class="modal-header">
         <h2 class="card-title">
@@ -454,61 +593,181 @@
             กรอกข้อมูลลูกหนี้และรายละเอียดคำสั่งศาลเบื้องต้น ระบบจะบันทึกเข้าคลังและเริ่มคำนวณทันที:
           </p>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">ชื่อลูกหนี้ / จำเลย *</label>
-              <input type="text" id="newDebtorName" class="form-control" placeholder="เช่น นายสมชาย ใจดี" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">ชื่อเจ้าหนี้ / โจทก์</label>
-              <input type="text" id="newPlaintiffName" class="form-control" placeholder="เช่น ธนาคารกู้ยืม จำกัด">
+          <!-- Category Selector -->
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label" style="font-weight: 700; color: #1d4ed8; font-size: 0.92rem;">
+              📌 เลือกประเภทลูกหนี้ที่ต้องการบันทึก *
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
+              <label id="lblCatPreLit" style="border: 2px solid #1d4ed8; background: rgba(59,130,246,0.08); padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; transition: all 0.2s;">
+                <input type="radio" name="newDebtorCategory" id="catPreLit" value="prelit" checked style="margin-top: 3px;">
+                <div>
+                  <div style="font-weight: 700; color: #1e3a8a;">⚖️ เพิ่มลูกหนี้ ก่อนฟ้อง</div>
+                  <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">สำหรับส่งเรื่องฝ่ายกฎหมาย, ค่าปรับสัญญาเช่า & ยอดผิดนัด</div>
+                </div>
+              </label>
+
+              <label id="lblCatCourt" style="border: 1px solid #cbd5e1; background: #fff; padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; transition: all 0.2s;">
+                <input type="radio" name="newDebtorCategory" id="catCourt" value="court" style="margin-top: 3px;">
+                <div>
+                  <div style="font-weight: 700; color: #0f172a;">🏛️ เพิ่มลูกหนี้ คดี</div>
+                  <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">สำหรับบันทึกคดีดำ/แดง, คำพิพากษาศาล & การผ่อนชำระ</div>
+                </div>
+              </label>
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">หมายเลขคดีดำ</label>
-              <input type="text" id="newCaseBlackNo" class="form-control" placeholder="เช่น พ. 123/2565">
+          <!-- Section 1: Pre-Litigation Form (8 exact fields) -->
+          <div id="secPreLitForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">1. ชื่อลูกหนี้ / ผู้เช่า *</label>
+                <input type="text" id="newDebtorName" class="form-control" placeholder="เช่น นายสมคิด มั่งมี / บริษัท ผู้เช่า จำกัด">
+              </div>
+              <div class="form-group">
+                <label class="form-label">2. ยอดหนี้ก่อนส่งฟ้อง (บาท) *</label>
+                <input type="text" inputmode="decimal" id="newPreLitigationDebt" class="form-control" placeholder="เช่น 250,000.00" value="100,000.00">
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">หมายเลขคดีแดง</label>
-              <input type="text" id="newCaseRedNo" class="form-control" placeholder="เช่น พ. 456/2565">
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">3. อัตราดอกเบี้ยก่อนฟ้อง (% ต่อปี)</label>
+                <input type="number" id="newPreLitigationRate" class="form-control" value="1.5" step="any" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">4. รูปแบบคิดค่าปรับสัญญาเช่า</label>
+                <select id="newRentalPenaltyType" class="form-control">
+                  <option value="flat">แบบเหมาจ่ายรวม (บาท)</option>
+                  <option value="daily">แบบรายวัน (บาท/วัน)</option>
+                  <option value="monthly">แบบรายเดือน (บาท/เดือน)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" id="lblNewRentalPenaltyFee">5. จำนวนเงินค่าปรับสัญญาเช่า (บาท)</label>
+                <input type="text" inputmode="decimal" id="newRentalPenaltyFee" class="form-control" placeholder="เช่น 15,000.00 หรือ 500.00">
+              </div>
+              <div class="form-group">
+                <label class="form-label">6. หมายเหตุส่งฟ้อง</label>
+                <input type="text" id="newPreLitigationNotes" class="form-control" placeholder="เช่น ค้างชำระค่าเช่า 3 งวด + ค่าปรับผิดนัดรายวันตามสัญญาข้อ 5">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">7. วันผิดนัดชำระ *</label>
+                <input type="date" id="newDefaultDate" class="form-control" value="2020-01-01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">8. วันเสนอเรื่องส่งฟ้อง *</label>
+                <input type="date" id="newFilingDate" class="form-control" value="2021-01-01">
+              </div>
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">จำนวนเงินต้นฟ้อง (บาท) *</label>
-            <input type="number" id="newPrincipalAmount" class="form-control" placeholder="เช่น 150000" step="1000" min="0" value="100000" required>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">วันผิดนัดชำระ *</label>
-              <input type="date" id="newDefaultDate" class="form-control" value="2020-01-01" required>
+          <!-- Section 2: Court Case Form -->
+          <div id="secCourtForm" style="display: none;">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">ชื่อจำเลย / ลูกหนี้คดี *</label>
+                <input type="text" id="newCourtDefendantName" class="form-control" placeholder="เช่น นายสมชาย ใจดี">
+              </div>
+              <div class="form-group">
+                <label class="form-label">ชื่อโจทก์ / เจ้าหนี้</label>
+                <input type="text" id="newCourtPlaintiffName" class="form-control" placeholder="เช่น ธนาคารกู้ยืม จำกัด">
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">วันฟ้องคดี *</label>
-              <input type="date" id="newFilingDate" class="form-control" value="2021-01-01" required>
-            </div>
-          </div>
 
-          <div class="form-group">
-            <label class="form-label">รูปแบบอัตราดอกเบี้ย</label>
-            <select id="newInterestPreset" class="form-control">
-              <option value="legal2021">ดอกเบี้ยผิดนัดตามกฎหมายใหม่ (7.5% ➔ 5.0% ตาม พ.ร.ก. 2564)</option>
-              <option value="contract15">อัตราตามสัญญา 15% ต่อปี ตลอดระยะเวลา</option>
-              <option value="contractAndLegal">อัตราตามสัญญา 15% ถึงวันฟ้อง + 5% หลังฟ้อง</option>
-            </select>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">หมายเลขคดีดำ</label>
+                <input type="text" id="newCaseBlackNo" class="form-control" placeholder="เช่น พ. 123/2565">
+              </div>
+              <div class="form-group">
+                <label class="form-label">หมายเลขคดีแดง</label>
+                <input type="text" id="newCaseRedNo" class="form-control" placeholder="เช่น พ. 456/2565">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">จำนวนเงินต้นฟ้อง (บาท) *</label>
+                <input type="text" inputmode="decimal" id="newPrincipalAmount" class="form-control" placeholder="เช่น 150,000.50" value="100,000.00">
+              </div>
+              <div class="form-group">
+                <label class="form-label">รูปแบบอัตราดอกเบี้ยคำพิพากษา</label>
+                <select id="newInterestPreset" class="form-control">
+                  <option value="legal2021">ดอกเบี้ยผิดนัดตามกฎหมายใหม่ (7.5% ➔ 5.0% ตาม พ.ร.ก. 2564)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">วันผิดนัดชำระ *</label>
+                <input type="date" id="newCourtDefaultDate" class="form-control" value="2020-01-01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">วันฟ้องคดี *</label>
+                <input type="date" id="newCourtFilingDate" class="form-control" value="2021-01-01">
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="btnCancelAddDebtor">ยกเลิก</button>
-          <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff;">
-            <i data-lucide="check"></i> บันทึกและเริ่มคำนวณลูกหนี้รายนี้
+          <button type="submit" class="btn btn-primary" id="btnSubmitAddDebtor" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff;">
+            ⚖️ บันทึกข้อมูลลูกหนี้ก่อนฟ้อง
           </button>
         </div>
       </form>
+    </div>
+  <!-- Pre-Litigation Import Modal -->
+  <div class="modal-overlay no-print" id="preLitigationImportModal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2 class="card-title">
+          <i data-lucide="file-up"></i> นำเข้ารายการลูกหนี้ก่อนส่งฟ้อง (Pre-Litigation Debtor Import)
+        </h2>
+        <button type="button" class="modal-close-btn" id="btnClosePreLitigationImportModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="legal-notice" style="border-left-color: var(--primary-blue); background: rgba(59, 130, 246, 0.08); color: var(--text); margin-bottom: 1rem;">
+          <i data-lucide="info" style="flex-shrink: 0; width: 18px;"></i>
+          <span>
+            เลือกนำเข้าไฟล์ CSV หรือ JSON รายการลูกหนี้ก่อนส่งฟ้อง หรือดาวน์โหลดแม่แบบ CSV สำหรับกรอกข้อมูลลูกหนี้
+          </span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.85rem; margin: 1rem 0;">
+          <button type="button" class="btn btn-primary" id="btnChoosePreLitFile" style="padding: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i data-lucide="upload-cloud"></i> เลือกไฟล์ CSV / JSON รายการลูกหนี้เพื่อนำเข้า
+          </button>
+
+          <button type="button" class="btn btn-secondary" id="btnDownloadPreLitCsvTemplate" style="padding: 10px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i data-lucide="download"></i> ดาวน์โหลดแม่แบบ CSV รายการลูกหนี้ก่อนส่งฟ้อง
+          </button>
+        </div>
+
+        <div id="preLitImportPreviewContainer" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #cbd5e1;">
+          <div style="font-size: 0.88rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 8px;">
+            📋 เลือกลูกหนี้จากไฟล์ที่นำเข้าเพื่อโหลดลงฟอร์ม:
+          </div>
+          <select id="selectPreLitImportedDebtor" class="form-control" style="margin-bottom: 1rem;"></select>
+          <button type="button" class="btn btn-primary" id="btnApplyPreLitSelectedDebtor" style="width: 100%; background: #1d4ed8; color: white;">
+            <i data-lucide="check-circle"></i> โหลดข้อมูลลูกหนี้ที่เลือกลงฟอร์มก่อนส่งฟ้อง
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btnCancelPreLitImport">ปิดหน้าต่าง</button>
+      </div>
     </div>
   </div>
 
