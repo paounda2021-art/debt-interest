@@ -18,8 +18,12 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
-// ─── Serve static frontend files ──────────────────────────────────
-app.use(express.static(path.join(__dirname)));
+// ─── Serve static frontend files (No cache) ───────────────────────
+app.use(express.static(path.join(__dirname), {
+  setHeaders: (res, filePath) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+}));
 
 // ─── REST API Router: /api/cases (supports subpaths and trailing slashes) ───
 const apiRouter = express.Router();
