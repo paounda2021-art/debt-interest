@@ -102,10 +102,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const legalChangeDate = '2021-04-11';
 
     if (preset === 'legal2021') {
-      interestStages = [
-        { startDate: defaultDate, endDate: '2021-04-10', rate: 7.5, label: 'ดอกเบี้ยผิดนัดก่อน 11 เม.ย. 64 (7.5%)' },
-        { startDate: legalChangeDate, endDate: '', rate: 5.0, label: 'ดอกเบี้ยผิดนัดหลัง 11 เม.ย. 64 (5.0%)' }
-      ];
+      const dStart = parseDateLocal(defaultDate);
+      const dLegal = parseDateLocal(legalChangeDate);
+      if (dStart && dStart >= dLegal) {
+        interestStages = [
+          { startDate: defaultDate, endDate: '', rate: 5.0, label: 'ดอกเบี้ยผิดนัดหลัง 11 เม.ย. 64 (5.0%)' }
+        ];
+      } else {
+        interestStages = [
+          { startDate: defaultDate, endDate: '2021-04-10', rate: 7.5, label: 'ดอกเบี้ยผิดนัดก่อน 11 เม.ย. 64 (7.5%)' },
+          { startDate: legalChangeDate, endDate: '', rate: 5.0, label: 'ดอกเบี้ยผิดนัดหลัง 11 เม.ย. 64 (5.0%)' }
+        ];
+      }
     } else if (preset === 'contract15') {
       interestStages = [
         { startDate: defaultDate, endDate: '', rate: 15.0, label: 'อัตราดอกเบี้ยตามสัญญา (15% ต่อปี)' }
@@ -532,11 +540,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let ledgerRows = [];
 
-    const curDate = parseDateLocal(interestStages[0].startDate);
-    const targetDate = parseDateLocal(calcTargetDateStr);
+    const defDateStr = document.getElementById('defaultDate')?.value || document.getElementById('filingDate')?.value || (interestStages[0] && interestStages[0].startDate);
+    const curDate = parseDateLocal(defDateStr) || parseDateLocal(interestStages[0]?.startDate);
+    let targetDate = parseDateLocal(calcTargetDateStr);
+
+    if (!targetDate) {
+      targetDate = new Date();
+      if (document.getElementById('calcTargetDate')) {
+        document.getElementById('calcTargetDate').value = formatDateIso(targetDate);
+      }
+    }
 
     if (!curDate || !targetDate || curDate > targetDate) {
-      renderSummary(0, currentPrincipal, 0, accruedFeesTotal, 0, 0, calcTargetDateStr, principalInit);
+      renderSummary(currentPrincipal + accruedFeesTotal, currentPrincipal, 0, accruedFeesTotal, 0, 0, calcTargetDateStr, principalInit);
       renderTable([]);
       return;
     }
@@ -2367,9 +2383,6 @@ document.addEventListener('DOMContentLoaded', () => {
     courtForm.querySelectorAll('input, select').forEach(input => {
       ['change', 'input'].forEach(evt => {
         input.addEventListener(evt, () => {
-          if (currentPreset === 'legal2021') {
-            applyPreset(currentPreset);
-          }
           calculateAndRender();
         });
       });
