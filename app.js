@@ -497,10 +497,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 6. Main Legal Interest Calculation Engine
   function calculateAndRender() {
-    const principalInit = parseFloat(document.getElementById('principalAmount')?.value) || 0;
+    const principalInit = parseFormattedNumber(document.getElementById('principalAmount')?.value) || 0;
     const calcTargetDateStr = document.getElementById('calcTargetDate')?.value || todayStr;
-    const courtFee = parseFloat(document.getElementById('courtFeeAwarded')?.value) || 0;
-    const attorneyFee = parseFloat(document.getElementById('attorneyFeeAwarded')?.value) || 0;
+    const courtFee = parseFormattedNumber(document.getElementById('courtFeeAwarded')?.value) || 0;
+    const attorneyFee = parseFormattedNumber(document.getElementById('attorneyFeeAwarded')?.value) || 0;
 
     const caseBlackNo = document.getElementById('caseBlackNo')?.value || '-';
     const caseRedNo = document.getElementById('caseRedNo')?.value || '-';
@@ -901,7 +901,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data.filingDate !== undefined) document.getElementById('filingDate').value = data.filingDate;
     if (data.judgmentDate !== undefined) document.getElementById('judgmentDate').value = data.judgmentDate;
     if (data.calcTargetDate !== undefined) document.getElementById('calcTargetDate').value = data.calcTargetDate;
-    const totalFeeInput = (data.courtFeeAwarded !== undefined ? parseFloat(data.courtFeeAwarded) || 0 : 0) + (data.attorneyFeeAwarded !== undefined ? parseFloat(data.attorneyFeeAwarded) || 0 : 0);
+    const totalFeeInput = (data.courtFeeAwarded !== undefined ? parseFormattedNumber(data.courtFeeAwarded) || 0 : 0) + (data.attorneyFeeAwarded !== undefined ? parseFormattedNumber(data.attorneyFeeAwarded) || 0 : 0);
     if (document.getElementById('courtFeeAwarded')) document.getElementById('courtFeeAwarded').value = totalFeeInput;
 
     const debtorNameVal = data.preLitigationDebtorName || data.preLitigationDebtor || data.defendantName || '';
