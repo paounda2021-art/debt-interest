@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <ul style="margin:0 0 8px 1.4rem;padding:0;display:flex;flex-direction:column;gap:3px;">
         <li>เงินต้นคงเหลือ: <strong>${formatCurrency(remPrincipal)}</strong> (จากเงินต้นฟ้อง ${formatCurrency(origPrincipal)})</li>
         <li>ดอกเบี้ยสะสมค้างชำระ: <strong>${formatCurrency(totalInterest)}</strong></li>
-        <li>ค่าธรรมเนียมศาลและค่าทนายความที่ศาลสั่งใช้แทนคงเหลือ: <strong>${formatCurrency(totalFees)}</strong></li>
+        <li>บัญชีค่าฤชาธรรมเนียมคงเหลือ: <strong>${formatCurrency(totalFees)}</strong></li>
       </ul>
       <p style="margin:0;font-size:0.83rem;color:var(--text-muted);">* หมายเหตุ: การตัดชำระหนี้เป็นไปตามประมวลกฎหมายแพ่งและพาณิชย์ มาตรา 329 โดยหักค่าธรรมเนียมศาล/ค่าใช้จ่าย แล้วจึงหักดอกเบี้ยค้างชำระ และส่วนที่เหลือจึงนำไปตัดเงินต้น</p>
     `;
