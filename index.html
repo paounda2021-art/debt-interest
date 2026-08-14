@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบคำนวณดอกเบี้ยตามคำสั่งฟ้อง/คำพิพากษาศาล (Thai Court Interest Calculator)</title>
-  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="styles.css?v=14">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -129,16 +129,20 @@
               <label class="form-label" id="lblSecurityDeposit">เงินประกันสัญญา (บาท)</label>
               <input type="text" inputmode="decimal" id="securityDeposit" class="form-control" placeholder="เช่น 15,000.00">
             </div>
+            <div class="form-group">
+              <label class="form-label" id="lblCollectionFee">ค่าทวงถาม (บาท)</label>
+              <input type="text" inputmode="decimal" id="collectionFee" class="form-control" placeholder="เช่น 3,000.00">
+            </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">วันผิดนัดชำระ *</label>
-              <input type="date" id="preLitDefaultDate" class="form-control" value="2020-01-01">
+              <input type="text" id="preLitDefaultDate" class="form-control thai-datepicker" value="01/01/2563" placeholder="วว/ดด/ปปปป (พ.ศ.)" autocomplete="off">
             </div>
             <div class="form-group">
               <label class="form-label">วันเสนอเรื่องส่งฟ้อง *</label>
-              <input type="date" id="preLitFilingDate" class="form-control" value="2021-01-01">
+              <input type="text" id="preLitFilingDate" class="form-control thai-datepicker" value="01/01/2564" placeholder="วว/ดด/ปปปป (พ.ศ.)" autocomplete="off">
             </div>
           </div>
 
@@ -165,17 +169,25 @@
               </button>
             </div>
           </div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; padding: 0.5rem 0;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; padding: 0.5rem 0;">
             <div style="background: var(--card-bg, #fff); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color, #e2e8f0);">
               <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">ยอดหนี้ค้างชำระก่อนฟ้อง</span>
               <div id="displayPreLitigationDebt" style="font-size: 1.2rem; font-weight: 700; color: var(--text); margin-top: 4px;">0.00 ฿</div>
             </div>
             <div style="background: var(--card-bg, #fff); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color, #e2e8f0);">
-              <span style="font-size: 0.82rem; color: var(--accent-rose, #e11d48); font-weight: 600;">คิดค่าปรับ (เฉพาะค่าเช่า)</span>
+              <span style="font-size: 0.82rem; color: #dc2626; font-weight: 600;">หักเงินประกันสัญญา</span>
+              <div id="displaySecurityDeposit" style="font-size: 1.2rem; font-weight: 700; color: #dc2626; margin-top: 4px;">0.00 ฿</div>
+            </div>
+            <div style="background: var(--card-bg, #fff); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color, #e2e8f0);">
+              <span style="font-size: 0.82rem; color: #0284c7; font-weight: 600;">ค่าทวงถาม</span>
+              <div id="displayCollectionFee" style="font-size: 1.2rem; font-weight: 700; color: #0284c7; margin-top: 4px;">0.00 ฿</div>
+            </div>
+            <div style="background: var(--card-bg, #fff); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color, #e2e8f0);">
+              <span style="font-size: 0.82rem; color: var(--accent-rose, #e11d48); font-weight: 600;">คิดค่าปรับสัญญาเช่า</span>
               <div id="displayRentalPenaltyFee" style="font-size: 1.2rem; font-weight: 700; color: var(--accent-rose, #e11d48); margin-top: 4px;">0.00 ฿</div>
             </div>
             <div style="background: var(--card-bg, #fff); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color, #e2e8f0);">
-              <span style="font-size: 0.82rem; color: var(--primary-gold, #d97706); font-weight: 600;">ยอดรวมส่งฟ้องกฎหมาย (รวมค่าปรับ)</span>
+              <span style="font-size: 0.82rem; color: var(--primary-gold, #d97706); font-weight: 600;">ยอดรวมส่งฟ้องกฎหมาย (สุทธิ)</span>
               <div id="displayPreLitigationTotal" style="font-size: 1.25rem; font-weight: 800; color: var(--primary-gold, #d97706); margin-top: 4px;">0.00 ฿</div>
             </div>
           </div>
@@ -285,29 +297,29 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">เงินต้นฟ้องตามคำพิพากษา (บาท)</label>
+            <label class="form-label">ยอดหนี้ตามคำพิพากษา</label>
             <input type="text" inputmode="decimal" id="principalAmount" class="form-control" value="100,000.00" required>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">วันผิดนัดชำระ</label>
-              <input type="date" id="defaultDate" class="form-control" value="2020-01-01" required>
+              <input type="text" id="defaultDate" class="form-control thai-datepicker" value="01/01/2563" required placeholder="วว/ดด/ปปปป (พ.ศ.)" autocomplete="off">
             </div>
             <div class="form-group">
               <label class="form-label">วันฟ้องคดี</label>
-              <input type="date" id="filingDate" class="form-control" value="2021-01-01" required>
+              <input type="text" id="filingDate" class="form-control thai-datepicker" value="01/01/2564" required placeholder="วว/ดด/ปปปป (พ.ศ.)" autocomplete="off">
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">วันอ่านคำพิพากษา</label>
-              <input type="date" id="judgmentDate" class="form-control" value="2021-06-01">
+              <input type="text" id="judgmentDate" class="form-control thai-datepicker" value="01/06/2564" placeholder="วว/ดด/ปปปป (พ.ศ.)" autocomplete="off">
             </div>
             <div class="form-group">
               <label class="form-label">วันที่คำนวณยอดหนี้</label>
-              <input type="date" id="calcTargetDate" class="form-control" required>
+              <input type="text" id="calcTargetDate" class="form-control thai-datepicker" required placeholder="วว/ดด/ปปปป (พ.ศ.)" autocomplete="off">
             </div>
           </div>
 
@@ -381,9 +393,9 @@
         </div>
 
         <div class="stat-card emerald">
-          <div class="stat-label">เงินต้นคงเหลือ</div>
+          <div class="stat-label" id="summaryPrincipalLabel">ยอดหนี้ตามคำพิพากษา</div>
           <div class="stat-value" id="summaryRemainingPrincipal">0.00 ฿</div>
-          <div class="stat-sub" id="summaryOriginalPrincipalSub">จากเงินต้นฟ้อง 0.00 ฿</div>
+          <div class="stat-sub" id="summaryOriginalPrincipalSub">จากเงินต้นฟ้อง 0.00 ฿ (หลังหักเงินประกัน+ค่าทวงถามแล้ว)</div>
         </div>
 
         <div class="stat-card amber">
@@ -393,7 +405,7 @@
         </div>
 
         <div class="stat-card rose">
-          <div class="stat-label">ค่าธรรมเนียม & ค่าทนายรวม</div>
+          <div class="stat-label">บัญชีค่าฤชาธรรมเนียม</div>
           <div class="stat-value" id="summaryTotalFees">0.00 ฿</div>
           <div class="stat-sub" id="summaryPaidSub">ชำระแล้วสะสม 0.00 ฿</div>
         </div>
@@ -661,16 +673,20 @@
                 <label class="form-label" id="lblNewSecurityDeposit">เงินประกันสัญญา (บาท)</label>
                 <input type="text" inputmode="decimal" id="newSecurityDeposit" class="form-control" placeholder="เช่น 15,000.00">
               </div>
+              <div class="form-group">
+                <label class="form-label" id="lblNewCollectionFee">ค่าทวงถาม (บาท)</label>
+                <input type="text" inputmode="decimal" id="newCollectionFee" class="form-control" placeholder="เช่น 3,000.00">
+              </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">วันผิดนัดชำระ *</label>
-                <input type="date" id="newDefaultDate" class="form-control" value="2020-01-01">
+                <input type="text" id="newDefaultDate" class="form-control thai-datepicker" value="01/01/2563" placeholder="วว/ดด/ปปปป (พ.ศ.)" autocomplete="off">
               </div>
               <div class="form-group">
                 <label class="form-label">วันเสนอเรื่องส่งฟ้อง *</label>
-                <input type="date" id="newFilingDate" class="form-control" value="2021-01-01">
+                <input type="text" id="newFilingDate" class="form-control thai-datepicker" value="01/01/2564" placeholder="วว/ดด/ปปปป (พ.ศ.)" autocomplete="off">
               </div>
             </div>
 
@@ -722,11 +738,11 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">วันผิดนัดชำระ *</label>
-                <input type="date" id="newCourtDefaultDate" class="form-control" value="2020-01-01">
+                <input type="text" id="newCourtDefaultDate" class="form-control thai-datepicker" value="01/01/2563" placeholder="วว/ดด/ปปปป (พ.ศ.)" autocomplete="off">
               </div>
               <div class="form-group">
                 <label class="form-label">วันฟ้องคดี *</label>
-                <input type="date" id="newCourtFilingDate" class="form-control" value="2021-01-01">
+                <input type="text" id="newCourtFilingDate" class="form-control thai-datepicker" value="01/01/2564" placeholder="วว/ดด/ปปปป (พ.ศ.)" autocomplete="off">
               </div>
             </div>
           </div>

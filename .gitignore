@@ -13,5 +13,6 @@ cases.db
 .DS_Store
 Thumbs.db
 
-# Logs
+# Logs & Backups
 *.log
+*.zip

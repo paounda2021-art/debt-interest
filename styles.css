@@ -970,3 +970,231 @@ select.form-control { cursor: pointer; background-image: none; }
     padding: 0.75rem;
   }
 }
+
+/* ==========================================================================
+   Thai Buddhist Era (พ.ศ.) DatePicker Styles
+   ========================================================================== */
+.thai-datepicker-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.thai-datepicker-wrapper input.thai-datepicker {
+  padding-right: 2.5rem !important;
+  cursor: pointer;
+  background-color: #fff;
+  font-family: inherit;
+}
+
+.thai-datepicker-icon-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--royal, #2563eb);
+  cursor: pointer;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: var(--transition);
+}
+
+.thai-datepicker-icon-btn:hover {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--navy, #1e3a5f);
+}
+
+/* Floating Popup Calendar */
+.thai-calendar-popup {
+  position: fixed;
+  z-index: 999999;
+  background: #ffffff;
+  border-radius: var(--radius-md, 10px);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2), 0 2px 8px rgba(15, 23, 42, 0.08);
+  border: 1.5px solid var(--border, #cbd5e1);
+  width: 320px;
+  max-width: 95vw;
+  padding: 12px;
+  font-family: var(--font, sans-serif);
+  color: var(--text, #1e293b);
+  display: none;
+  animation: thaiCalendarFadeIn 0.15s ease-out;
+}
+
+.thai-calendar-popup.active {
+  display: block;
+}
+
+@keyframes thaiCalendarFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.thai-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.thai-cal-nav-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--navy, #1e3a5f);
+  font-weight: bold;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.thai-cal-nav-btn:hover {
+  background: var(--royal-pale, #eff6ff);
+  border-color: var(--royal, #2563eb);
+  color: var(--royal, #2563eb);
+}
+
+.thai-cal-selectors {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+}
+
+.thai-cal-select {
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--navy, #1e3a5f);
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+}
+
+.thai-cal-select:focus {
+  border-color: var(--royal, #2563eb);
+}
+
+.thai-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-sub, #64748b);
+  margin-bottom: 6px;
+}
+
+.thai-cal-weekdays span:first-child {
+  color: #dc2626; /* Sunday Red */
+}
+
+.thai-cal-weekdays span:last-child {
+  color: #2563eb; /* Saturday Blue */
+}
+
+.thai-cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.thai-cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 0.86rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.12s ease-in-out;
+  color: var(--text, #1e293b);
+  user-select: none;
+}
+
+.thai-cal-day:hover:not(.disabled):not(.selected) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.thai-cal-day.other-month {
+  color: #94a3b8;
+  opacity: 0.5;
+}
+
+.thai-cal-day.today {
+  border: 1.5px solid var(--royal, #2563eb);
+  font-weight: 700;
+  color: var(--royal, #2563eb);
+}
+
+.thai-cal-day.selected {
+  background: linear-gradient(135deg, var(--royal, #2563eb), var(--navy, #1e3a5f)) !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+}
+
+.thai-cal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.thai-cal-footer button {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.thai-cal-footer .btn-cal-today {
+  background: var(--royal-pale, #eff6ff);
+  color: var(--royal, #2563eb);
+  border-color: #bfdbfe;
+}
+
+.thai-cal-footer .btn-cal-today:hover {
+  background: var(--royal, #2563eb);
+  color: #fff;
+}
+
+.thai-cal-footer .btn-cal-clear {
+  color: #dc2626;
+}
+
+.thai-cal-footer .btn-cal-clear:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.thai-cal-footer .btn-cal-close:hover {
+  background: #e2e8f0;
+}
+
